@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"errors"
 
 )
 
@@ -75,20 +76,27 @@ func (r *Request) JsonPost(body interface{}, url) error {
 	
 	var bodyByte []byte
 
-	
+	switch t := body.(type) {
+		case:string
+		bodyByte = []byte(body)
+		case:[]byte
+		bodyByte = body
+	default:
+		return errors.New("参数类型错误！")
+	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(xmlStr)))
+	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyByte)))
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Accept", "application/xml")
-	req.Header.Set("Content-Type", "application/xml;charset=utf-8")
+	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if (err != nil){
 		return err
 	}		
 
-	return xml.Unmarshal(respBytes, r.RespStruct)
+	return json.Unmarshal(respBytes, r.RespStruct)
 }

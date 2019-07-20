@@ -1,44 +1,30 @@
 package wechat
 
 import (
-	"net/http"
-	"fmt"	
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 )
 
-type JsapiTicket struct{
-	ErrCode 	string	`json:"errcode"`
-	ErrMsg 		string	`json:"errmsg"`
-	Ticket 		string	`json:"ticket"`
-	ExpiresIn 	int 	`json:"expires_in"`	
+type JsapiTicket struct {
+	ErrCode   string `json:"errcode"`
+	ErrMsg    string `json:"errmsg"`
+	Ticket    string `json:"ticket"`
+	ExpiresIn int    `json:"expires_in"`
 }
 
-type JsSdk struct {
-	Token  string
-	Jt JsapiTicket
-} 
+func Ticket(token string) {
 
-func NewTicket(token string) *JsSdk{
-	return &JsSdk{
-		Token : token,
-	}
-}
-
-func (js *JsSdk)Get() JsapiTicket {
 	url := "https://api.weixin.qq.com/cgi-bin/ticket/getticket?"
-	url += "type=jsapi&access_token=" + js.Token
-	resp, err := http.Get(url)	
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)	
-	if err != nil {
-		fmt.Println(err)		
-	}
-	var s JsapiTicket
-	json.Unmarshal(body, &s)
-	return s	
-}
+	url += "type=jsapi&access_token=" + token
 
+	var s JsapiTicket
+	err := NewRequest(&s).Get(url)
+
+	if err != nil {
+		return nil, error
+	}
+
+	return s, nil
+}
