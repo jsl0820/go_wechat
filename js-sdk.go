@@ -14,8 +14,16 @@ type JsapiTicket struct {
 	ExpiresIn int    `json:"expires_in"`
 }
 
-func Ticket(token string) {
+type Ticket struct {
+	Noncestr string `json:"noncestr"`
+	Jt string `json:"jsapi_ticket"`
+	TimeStamp int64 `json:"timestamp"`
+	Url string `json:"url"`  
+}
 
+
+func Ticket() {
+	t := 
 	url := "https://api.weixin.qq.com/cgi-bin/ticket/getticket?"
 	url += "type=jsapi&access_token=" + token
 

@@ -23,6 +23,7 @@ func CreateNonceStr(length int) string {
 	return string(result)
 }
 
+
 //转字符串
 func ToString(value interface{}) string {
    switch t := value.(type){
@@ -37,4 +38,25 @@ func ToString(value interface{}) string {
    case: float64	
    		return strconv.FormatFloat(value, 'f', -1, 64)		 		   
    }
+}
+
+//转换成XML
+func ToXml (data interface{}) string {
+
+}
+
+//签名
+type SignData map[string]string
+
+
+func (s *SignData) StringSign() string {
+	var a []string
+	for k, v := range s {
+		a = append(a, k + "=" v)
+	}
+
+	sort.Strings(a)
+	strings.Join(a, "&")
+
+
 }

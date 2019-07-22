@@ -11,7 +11,7 @@ const (
 	TOKEN_ERROR_1 = "系统繁忙，此时请开发者稍候再试"
 	TOKEN_ERROR_2 = "AppSecret错误或者AppSecret不属于这个公众号，请开发者确认AppSecret的正确性"
 	TOKEN_ERROR_3 = "请确保grant_type字段值为client_credential"
-	TOKEN_ERROR_4 = "调用接口的IP地址不在白名单中，请在接口IP白名单中进行设置。（小程序及小游戏调用不要求IP地址在白名单内"
+	TOKEN_ERROR_4 = "调用接口的IP地址不在白名单中，请在接口IP白名单中进行设置。小程序及小游戏调用不要求IP地址在白名单内"
 )
 
 type AccessToken struct {
@@ -78,6 +78,34 @@ func (t. Token) clear(){
 			t.At = AccessToken{} 
 		}
 	}		
+}
+
+
+
+type JsapiTicket struct {
+	ErrCode   string `json:"errcode"`
+	ErrMsg    string `json:"errmsg"`
+	Ticket    string `json:"ticket"`
+	ExpiresIn int    `json:"expires_in"`
+}
+
+type Ticket struct {
+	Jt JsapiTicket
+}
+
+func (t *Ticket ) Get() {
+	t := token.Get()
+	url := "https://api.weixin.qq.com/cgi-bin/ticket/getticket?"
+	url += "type=jsapi&access_token=" + t
+
+	var s JsapiTicket
+	err := NewRequest(&s).Get(url)
+
+	if err != nil {
+		return nil, error
+	}
+
+	return s, nil
 }
 
 
