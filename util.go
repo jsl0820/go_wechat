@@ -24,6 +24,18 @@ func CreateNonceStr(length int) string {
 }
 
 
+func NonceStringGenerator(length int) string {
+	str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	bytes := []byte(str)
+	result := []byte{}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < length; i++ {
+		result = append(result, bytes[r.Intn(len(bytes))])
+	}
+	return string(result)
+}
+
+
 //转字符串
 func ToString(value interface{}) string {
    switch t := value.(type){
@@ -40,23 +52,41 @@ func ToString(value interface{}) string {
    }
 }
 
-//转换成XML
-func ToXml (data interface{}) string {
-
-}
 
 //签名
-type SignData map[string]string
-
-
-func (s *SignData) StringSign() string {
+func StringSign(data map[string]string) string {
 	var a []string
-	for k, v := range s {
+	for k, v := range data {
 		a = append(a, k + "=" v)
 	}
 
 	sort.Strings(a)
-	strings.Join(a, "&")
+	return strings.Join(a, "&")
+}
 
 
+func Md5(singString string)string{
+	h := md5.New()
+	h.Write([]byte(singString))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+//签名
+func Sha1Sign(stringSign string) string {
+	r := sha1.Sum([]byte(strs))
+	return hex.EncodeToString(r[:])
+}	
+
+
+//map
+func MapToXml(data map[string]string) string {
+	var xml = `<xml>`
+
+	for k, v := range data{
+		i = `<{{.k}}>` + v + `<{{.v}}>`
+		xml += v
+	}	
+
+	xml += `</xml>`
+	return xml
 }

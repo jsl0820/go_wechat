@@ -22,95 +22,61 @@ type AccessToken struct {
 }
 
 type Token struct {
-	At AccessToken
+	Expires int
+	At      AccessToken
 }
 
-var token Token
-
-//token 定期清理时间 
-var TokenGcTime = 7200
-
+var token = &Token{Expires: 7200}
 
 //刷新token
-func (t *Token)Reflash() error {
+func (t *Token) Refresh() error {
 
 	url := "https://api.weixin.qq.com/cgi-bin/token?"
 	url += "grant_type=client_credential&appid=" + WxAppId + "&secret=" + WxAppSecret
 
 	err := NewRequest(&t.At).Get(url)
 	if err != nil {
-		return err 
+		return err
 	}
 	return nil
 }
 
 //获取token
-func (t *Token) Get() (string, error ){
+func (t *Token) Get() (string, error) {
 	if t.AccessToken == (AccessToken{}) {
-		err := t.Reflash()
+		err := t.Refresh()
 		if err != nil {
 			return nil, err
 		}
 
-		switch t.At.Errcode{
-		case -1 :
+		switch t.At.Errcode {
+		case -1:
 			return errors.New(TOKEN_ERROR_1)
 		case 40001:
-			return errors.New(TOKEN_ERROR_2)	
+			return errors.New(TOKEN_ERROR_2)
 		case 40002:
-			return 	errors.New(TOKEN_ERROR_3)
-		case 40164:	
+			return errors.New(TOKEN_ERROR_3)
+		case 40164:
 			return errors.New(TOKEN_ERROR_4)
-		default :
+		default:
 			return t.At.AccessToken
 		}
-	} 
+	}
 
 	return t.At.AccessToken
 }
 
 //定期清空 时间间隔为 TokenGcTime
-func (t. Token) clear(){
-	duration := time.Duration(TokenGcTime) * time.Second
+func (t.Token) clear() {
+	duration := time.Duration(t.Expires) * time.Second
 	for {
 		<-time.After(duration)
 		if t.At != (AccessToken{}) {
-			t.At = AccessToken{} 
+			t.At = AccessToken{}
 		}
-	}		
-}
-
-
-
-type JsapiTicket struct {
-	ErrCode   string `json:"errcode"`
-	ErrMsg    string `json:"errmsg"`
-	Ticket    string `json:"ticket"`
-	ExpiresIn int    `json:"expires_in"`
-}
-
-type Ticket struct {
-	Jt JsapiTicket
-}
-
-func (t *Ticket ) Get() {
-	t := token.Get()
-	url := "https://api.weixin.qq.com/cgi-bin/ticket/getticket?"
-	url += "type=jsapi&access_token=" + t
-
-	var s JsapiTicket
-	err := NewRequest(&s).Get(url)
-
-	if err != nil {
-		return nil, error
 	}
-
-	return s, nil
 }
 
-
-func init(){
-	token = &Token{}
+func init() {
 	go token.clear()
 }
-
