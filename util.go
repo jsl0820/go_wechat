@@ -81,12 +81,10 @@ func Sha1Sign(stringSign string) string {
 //map
 func MapToXml(data map[string]string) string {
 	var xml = `<xml>`
-
 	for k, v := range data{
 		i = `<{{.k}}>` + v + `<{{.v}}>`
 		xml += v
 	}	
-
 	xml += `</xml>`
 	return xml
 }

@@ -61,7 +61,7 @@ type Payment struct{
 } 
 
 
-type PayNotify struct {
+type NotifyResp struct {
 	ReturnCode    string  `xml:"return_code"`
 	ReturnMsg     string  `xml:"return_msg"`
 	Appid         string  `xml:"appid"`
