@@ -38,16 +38,16 @@ func NonceStringGenerator(length int) string {
 
 //转字符串
 func ToString(value interface{}) string {
-   switch t := value.(type){
-   case: string
+   switch value.(type){
+   case string:
     	return value   
-   case: int32
+   case int32:
     	return strconv.Itoa(value)	
-   case: int64
+   case int64:
    		return strconv.FormatInt(int64,10)
-   case: float32
+   case float32:
    		return strconv.FormatFloat(value, 'f', -1, 32)
-   case: float64	
+   case float64:	
    		return strconv.FormatFloat(value, 'f', -1, 64)		 		   
    }
 }
@@ -57,7 +57,7 @@ func ToString(value interface{}) string {
 func StringSign(data map[string]string) string {
 	var a []string
 	for k, v := range data {
-		a = append(a, k + "=" v)
+		a = append(a, k + "=" + v)
 	}
 
 	sort.Strings(a)

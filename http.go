@@ -11,7 +11,7 @@ import (
 
 func NewRequest(v interface{}) {
 	return &Request{
-		RespStruct: v
+		RespStruct: v,
 	}
 }
 
@@ -53,7 +53,7 @@ func (r *Request) Post(url string)  error {
 }
 
 //用xml数据请求
-func (r *Request) XmlPost(xmlStr, url) error {
+func (r *Request) XmlPost(xmlStr, url string) error {
 	req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(xmlStr)))
 	if err != nil {
 		return err
@@ -72,20 +72,20 @@ func (r *Request) XmlPost(xmlStr, url) error {
 
 
 //用xml数据请求
-func (r *Request) JsonPost(body interface{}, url) error {
+func (r *Request) JsonPost(body interface{}, url string) error {
 	
 	var bodyByte []byte
 
-	switch t := body.(type) {
-		case:string
+	switch body.(type) {
+	case string:
 		bodyByte = []byte(body)
-		case:[]byte
+	case []byte:
 		bodyByte = body
 	default:
 		return errors.New("参数类型错误！")
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyByte)))
+	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyByte))
 	if err != nil {
 		return err
 	}

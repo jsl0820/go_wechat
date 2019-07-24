@@ -1,44 +1,11 @@
 package wechat
 
 import (
-	"time"
-	"sort"
-	"fmt"
-	"net/http"
-	"bytes"
-	"io/ioutil"
-	"encoding/xml"
-	"strconv"
-	"crypto/md5"
-	"encoding/hex"
-	// "net/url"
-	"strings"
-	"math/rand"
-	"errors"
-	"crypto/sha1"
+
 )
 
-// feture
-// 这个库还需要一个可以处理xml/map/struct之间的转换关系的辅助库
 
-const UnifiedOrderUrl = "https://api.mch.weixin.qq.com/pay/unifiedorder"
-
-// 统一下单
-type UnifiedOrder struct {
-	Appid            string `xml:"appid"`            //公众账号ID
-	Body             string `xml:"body"`             //商品描述
-	MchId            string `xml:"mch_id"`           //商户号
-	NonceStr         string `xml:"nonce_str"`        //随机字符串
-	NotifyUrl        string `xml:"notify_url"`       //通知地址
-	TradeType        string `xml:"trade_type"`       //交易类型
-	SpbillCreateIp   string `xml:"spbill_create_ip"` //支付提交用户端ip
-	TotalFee         int    `xml:"total_fee"`        //总金额
-	OutTradeNo     	 string `xml:"out_trade_no"`     //商户订单号
-	Sign             string `xml:"sign"`             //签名
-	Openid  		 string `xml:"openid"`	
-}
-
-type UnifiedOrderResponse struct {
+type UnifiedResp struct {
 	ReturnCode string `xml:"return_code"`
 	ReturnMsg  string `xml:"return_msg"`
 	Appid      string `xml:"appid"`
@@ -52,229 +19,348 @@ type UnifiedOrderResponse struct {
 	CodeUrl    string `xml:"code_url"`
 }
 
-type Payment struct{
-	TimeStamp  	string `json:"timeStamp"`
-	NonceStr	string `json:"nonceStr"`
-	Package     string `json:"package"`
-	SignType    string `json:"signType"`
-	PaySign		string `json:"paySign"`
+//统一下单接口
+type Unified struct {
+	PrepayId string
+	Resp UnifiedResp
+	Param map[string]string
+	PayInfo map[string]string
+}
+
+func(u *Unified)Mp(){
+	u.Param["appid"] = MpAppid
+	u.PayInfo["appid"] = MpAppid
+}
+
+func(u *Unified)Wx(){
+	u.Param["appid"] = WxAppId
+	u.PayInfo["appid"] = WxAppId
+}
+
+func(u *Unified)PrepayId() string {
+	u.Param["mch_id"] = MchId
+	stringSign = StringSign(p.Param) + "&key=" + PayKey
+	sign := strings.ToUpper(Md5(stringSign))
+	u.Param["sign"] =  sign
+
+	xml := MapToXml(p.Param)
+	url := "https://api.mch.weixin.qq.com/pay/unifiedorder"
+
+	var resp UnifiedResp
+	err := NewRequest(&resp).XmlPost(xml, url)
+	u.Resp = resp
+	return  resp.PrepayId
+}
+
+func(u *Unified)Get()map[string]string{
+
+	u.PayInfo["signType"] = "MD5" 
+	u.PayInfo["appId"] = p.param["appid"]
+	u.PayInfo["timeStamp"] = StampString()
+	u.PayInfo["nonceStr"] = NonceStringGenerator(32)
+	u.PayInfo["package"] = "prepay_id=" + res.PrepayId()
+
+	stringSign := StringSign(u.PayInfo) + "&key=" + PayKey
+	sign = Md5(stringSign)
+
+	u.PayInfo["paySign"] = strings.ToUpper(sign)
+
+	return u.PayInfo
+}
+
+//订单查询
+type QueryResp struct {
+	ReturnCode string `xml:"ReturnCode"`
+	ReturnMsg  string `xml:"return_code"`
+	AppId 	   string `xml:"appid"`
+	MchId      string `xml:"mch_id"`
+	NonceStr   string `xml:"nonce_str"` 
+	Sign 	   string `xml:"sign"`
+	ResultCode string `xml:"result_code"`
+	ErrCode    string `xml:"err_code"`
+	ErrCodeDes string `xml:"err_code_des"`
+	DeviceInfo string `xml:"device_info"`
+	Openid 	   string `xml:"openid"`
+	IsSubscribe string `xml:"is_subscribe"`
+	TradeType   string `xml:"trade_type"`
+	TradeState 	string `xml:"trade_state"`
+	BankType 	string `xml:"bank_type"`
+	TotalFee 	string `xml:"total_fee"`
+	SettlementTotalFee string `xml:"settlement_total_fee"`
+	FeeType string `xml:"fee_type"`
+	CashFee string `xml:"cash_fee"`
+	CashFeeType string `xml:"cash_fee_type"`
+	CouponFee string  `xml:"coupon_fee"`
+	CouponCount  string `xml:"coupon_count"`
+	CouponType string `xml:"coupon_type_$n"`
+	CouponId string `xml:"coupon_id_$n"`
+	CouponFee string `xml:"coupon_fee_$n"`
+	TransactionId string `xml:"transaction_id"`
+	UutTradeNo string `xml:"out_trade_no"`
+	Attach string `xml:"attach"`
+	TimeEnd string `xml:"time_end"`
+	TradeStateDesc string `xml:"trade_state_desc"`
+
+}
+
+type Query struct {
+	Param map[string]string
+}
+
+func (q *Query)config(plat string) error {
+
+	if plat == "mp"{
+		q.Param["appid"] = MpAppid
+		return nil 
+	}
+
+	if plate == "wx" {
+		q.Param["appid"]  = WxAppId
+		return nil 
+	}
+
+	return errors.New("请输入正确的参数！")
+}	
+
+func (q *Query)Get(codeType , code string)(QueryResp, error){
+	q.Param[codeType] = code
+	q.Param["mch_id"] = MchId
+	q.Param["nonce_str"] = NonceStringGenerator(32)
+	q.Param["sign"] = PaySign(q.Param)
+
+	body := MapToXml(q.Param)
+	url := "https://api.mch.weixin.qq.com/pay/orderquery"
+	var resp QueryResp
+	return NewRequest(&resp).XmlPost(body, url)
+}	
+
+
+//关闭订单
+type CloseResp struct {
+	ReturnCode string `xml:"ReturnCode"`
+	ReturnMsg  string `xml:"return_code"`	
+	AppId 	   string `xml:"appid"`
+	MchId      string `xml:"mch_id"`
+	NonceStr   string `xml:"nonce_str"` 
+	Sign 	   string `xml:"sign"`
+	ResultCode string `xml:"result_code"`
+	ErrCodeDes string `xml:"err_code_des"`
+}
+
+//退款
+type RefundResp struct {
+	ReturnCode string `xml:"ReturnCode"`
+	ReturnMsg  string `xml:"return_code"`
+	ResultCode string `xml:"result_code"`
+	ErrCodeDes string `xml:"err_code_des"`
+	ErrCode    string `xml:"err_code"`
+	AppId 	   string `xml:"appid"`
+	MchId      string `xml:"mch_id"`
+	NonceStr   string `xml:"nonce_str"` 
+	Sign 	   string `xml:"sign"`
+	TransactionId string `xml:"transaction_id"`
+	OutTradeNo string `xml:"out_trade_no"`
+	OutRefundNo string `xml:"out_refund_no"`
+	RefundId string `xml:"refund_id"`
+	RefundFee	int `xml:"refund_fee"`
+	SettlementRefundFee int `xml:"settlement_refund_fee"`
+	TotalFee 	string `xml:"total_fee"`
+	SettlementTotalFee string `xml:"settlement_total_fee"`
+	FeeType string `xml:"fee_type"`
+	CashFee string `xml:"cash_fee"`
+	CashFeeType string `xml:"cash_fee_type"`
+	CashRefundFee string `xml:"cash_refund_fee"`
+	CouponType string `xml:"coupon_type_$n"`
+	CouponRefundFee string `xml:"coupon_refund_fee"`
+	CouponRefundFeeN int `xml:"coupon_refund_fee_$n"`
+	CouponCount  string `xml:"coupon_count"`
+	CouponRefundId string `xml:"coupon_refund_id_$n"`
+}
+
+
+type RefundQueryResp struct {
+	ReturnCode string `xml:"ReturnCode"`
+	ReturnMsg  string `xml:"return_code"`
+	ErrCode    string `xml:"err_code"`
+	ErrCodeDes string `xml:"err_code_des"`
+	AppId 	   string `xml:"appid"`
+	MchId      string `xml:"mch_id"`
+	NonceStr   string `xml:"nonce_str"` 
+	Sign 	   string `xml:"sign"`
+	TotalRefundCount int `xml:"total_refund_count"`
+	TransactionId string `xml:"transaction_id"`
+	OutTradeNo string `xml:"out_trade_no"`
+	TransactionId string `xml:"transaction_id"`
+	TotalFee 	string `xml:"total_fee"`
+	SettlementTotalFee string `xml:"settlement_total_fee"`
+	FeeType string `xml:"fee_type"`
+	CashFee string `xml:"cash_fee"`
+	RefundCount int `xml:"refund_count"`
+	OutRefundNo string `xml:"out_refund_no"`
+	RefundId string `xml:"refund_id"`
+	RefundChannelNn string `xml:"refund_channel_$n"`
+	RefundFee	int `xml:"refund_fee"`
+	SettlementRefundFee int `xml:"settlement_refund_fee"`
+	CouponTypeNM 	string `xml:"coupon_type_$n_$m"`
+	CouponRefundFeeN int `xml:"coupon_refund_fee_$n"`
+	CouponRefundCountN int `xml:"coupon_refund_count_$n"`
+	CouponRefundIdNM string `xml:"coupon_refund_id_$n_$m"`
+	CouponRefundFeeNM	string `xlm:"coupon_refund_fee_$n_$m"`
+	RefundStatusN string `xml:"refund_status_$n"`
+	RefundAccountN string `xml:"refund_account_$n"`
+	RefundRecvAccoutN string `xml:"refund_recv_accout_$n"`
+	RefundSuccessTimeN string `xml:"refund_success_time_$n"`
+}
+
+
+//退款
+type Refund struct {
+	appid string
+	mchId string
+	orderType string
+	orderNum  string
+}
+
+//申请退款
+func(r *Refund) Apply( info map[string]string) RefundQueryResp{
+	info[r.orderType] = r.order
+	info["appid"] =  r.appid
+	info["mch_id"] = r.mchId
+	info["nonce_str"] = NonceStringGenerator(32)
+	info["sign"] = PaySign(info)
+
+	body := MapToXml(info)
+	url := "https://api.mch.weixin.qq.com/secapi/pay/refund"
+
+	resp := &RefundQueryResp{}
+	NewRequest(resp).Get(body, url)
+	return *resp
+}
+
+//查询退款
+func(r *Refund) Query(info map[string]string) RefundQueryResp {
+	var resp RefundQueryResp
+	body := MapToXml(r.Param)
+	url := "https://api.mch.weixin.qq.com/pay/refundquery"
+
+	NewRequest(&resp).XmlPost(body, url)
+	return resp
+}
+
+
+//下载对账单
+type DownLoadBillResp struct {
+	ReturnCode string `xml:"ReturnCode"`
+	ReturnMsg  string `xml:"return_code"`
+	ErrCode    string `xml:"err_code"`	
+	ErrCodeDes string `xml:"err_code_des"`
+}
+
+//账单
+type  Bill struct{
+	Param map[string]string
+	Resp DownLoadBillResp
+}
+
+//
+func(b *Bill)Get(billType, date string)Bill{
+	b.Param["bill_date"] = date	
+	b.Param["bill_type"] = billType	
+	b.Param["sign"] = PaySign(b.Param)
+
+	url := "https://api.mch.weixin.qq.com/pay/downloadbill"
+	body := MapToXml(b.Param)
+
+	var resp DownLoadBillResp
+	NewRequest(&resp).XmlPost(body, url)
+	return b	
+}
+
+//保存
+func (b *Bill)SaveAs(path string,  fileName string) {
+	
+}
+
+
+//支付
+type Pay struct {
+	appid string
+}
+
+//统一下单
+func(p *Pay)Unified(param map[string]string)Unified{
+	return &Unified{Param:param }
 } 
 
+//订单查询
+func (p *Pay)Query(codeType, code string) Query {
+	param := make(map[string]string)
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+	param[codeType] = code
+	return &Query{Param : param }
+}
 
-type NotifyResp struct {
-	ReturnCode    string  `xml:"return_code"`
-	ReturnMsg     string  `xml:"return_msg"`
-	Appid         string  `xml:"appid"`
-	Mchid         string  `xml:"mch_id"`
-	NonceStr      string  `xml:"nonce_str"`
-	Sign          string  `xml:"sign"`
-	ResultCode    string  `xml:"result_code"`
-	Openid        string  `xml:"openid"`
-	IsSubscribe   string  `xml:"is_subscribe"`
-	TradeType     string  `xml:"trade_type"`
-	BankType      string  `xml:"bank_type"`
-	TotalFee      string `xml:"total_fee"`
-	FeeType       string  `xml:"fee_type"`
-	CashFee       int     `xml:"cash_fee"`
-	CashFeeType   string  `xml:"cash_fee_type"`
-	TransactionId string  `xml:"transaction_id"`
-	OutTradeNo    string  `xml:"out_trade_no"`
-	TimeEnd       string  `xml:"time_end"`
+//关闭订单
+func (p *Pay)Close(codeType, code string)CloseResp{
+	param := make(map[string]string)
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+	param[codeType] = code
+	param["sign"] = PaySign(param) 
+	body := MapToXml(param)
+	url := "https://api.mch.weixin.qq.com/pay/closeorder"
+	var resp CloseResp
+	NewRequest(&resp).XmlPost(body, url)
+}
+
+
+//申请退款
+func (p *Pay)Refund(codeType, code string) QueryResp {
+	param := make(map[string]string)
+
+	param["appid"] = p.appid
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+	param[codeType] = code
+
+	body := MapToXml(param)
+	url := "https://api.mch.weixin.qq.com/pay/closeorder"
+	var resp CloseResp
+	NewRequest(&resp).XmlPost(body, url)
+}
+
+
+//下载对账单
+func(p *Pay)Bill(){
+	param := make(map[string]string)
+	param["appid"] = p.appid
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+
+	return &Bill{Param:param }
 }
 
 
 
-//支付参数
-type  PayOption struct {
-	AppId string
-	MchId string
-	Body string
-	OutTradeNo string
-	TotalFee int
-	IP string
-	NotifyUrl string
-	Key string
-	Openid string
+//支付签名
+func PaySign(param map[string]string) string{
+	stringSign = StringSign(p.config) + "&key=" + PayKey
+	sign = Md5(stringSign)
+	return strings.TouUpper(sign)
 }
 
-type SignMap map[string]string
 
-type MiniAppPay struct {
-	Option  PayOption
-	Unified UnifiedOrder
-}
+func NewPay(plat string){
 
-// 设置
-func SetPayOption(option PayOption) *MiniAppPay {
-
-	sign := make(SignMap)
-
-	nonceStr := CreateNonceStr(32)
-
-	sign["appid"] =  option.AppId
-	sign["mch_id"] = option.MchId
-	sign["nonce_str"] = nonceStr
-	sign["body"] = option.Body
-	sign["out_trade_no"] = option.OutTradeNo
-	sign["total_fee"] = strconv.Itoa(option.TotalFee)
-	sign["spbill_create_ip"] = option.IP
-	sign["notify_url"] = option.NotifyUrl
-	sign["trade_type"] = "JSAPI"
-	sign["openid"] = option.Openid
-
-	unifiedInfo := UnifiedOrder {
-		Appid : option.AppId,
-		MchId : option.MchId, 
-		NonceStr : nonceStr, 
-		Body :  option.Body, 
-		OutTradeNo : option.OutTradeNo,
-		TotalFee : option.TotalFee,
-		SpbillCreateIp : option.IP,
-		NotifyUrl : option.NotifyUrl,
-		TradeType : "JSAPI",
-		Sign : CreateSign(sign, option.Key),
-		Openid : option.Openid,
+	var appid string
+	if plat == "wx"{
+		appid = WxAppId 
 	}
 
-	p := new (MiniAppPay)
-	p.Option = option
-	p.Unified = unifiedInfo
-
-	fmt.Println("nonceStr:", nonceStr)
-	fmt.Println("sign:", sign)
-	fmt.Println("unified签名", CreateSign(sign, option.Key))
-	return p
-}
-
-// 发送请求
-func (p *MiniAppPay) GetUnifieldInfo() (UnifiedOrderResponse, error) {
-	var err error
-	xm, err := xml.Marshal(p.Unified)
-	xmlStr := strings.Replace(string(xm), "UnifiedOrder", "xml", -1)
-	fmt.Println(xmlStr)
-	request, err := http.NewRequest("POST", UnifiedOrderUrl , bytes.NewReader([]byte(xmlStr)))
-
-	request.Header.Set("Accept", "application/xml")
-	request.Header.Set("Content-Type", "application/xml;charset=utf-8")
-
-	client := http.Client{}
-	response, _ := client.Do(request)
-	respBytes, err := ioutil.ReadAll(response.Body)
-
-	var ret UnifiedOrderResponse
-	xml.Unmarshal(respBytes, &ret)
-
-	if ret.ResultCode == "FAIL" || ret.ReturnCode == "FAIL"{
-		info := "ResultCode:" + ret.ResultCode + ", ReturnCode:"+ ret.ReturnCode
-		err = errors.New(info)
-		fmt.Println("统一下单接口：", ret)
-		fmt.Println("ResultCode", ret.ResultCode)
-		fmt.Println("ReturnCode", ret.ReturnCode)
-	} 
-
-	return ret, err
-}
-
-// 获取支付信息
-func (p *MiniAppPay)GetPayMent() (Payment, error) {
-	res, err := p.GetUnifieldInfo()
-	// fmt.Println(res)	
-	sign := make(SignMap)
-	sign["appId"] = p.Option.AppId
-	sign["timeStamp"] = GetStampString()
-	sign["nonceStr"] = CreateNonceStr(32)
-	sign["package"] = "prepay_id="+res.PrepayId
-	sign["signType"] = "MD5"
-
-
-	payInfo := Payment{
-		TimeStamp : GetStampString(),
-		NonceStr : 	CreateNonceStr(32),
-		Package : "prepay_id="+res.PrepayId,
-		SignType : "MD5",
-		PaySign : CreateSign(sign, p.Option.Key),
+	if plat == "mp"{
+		appid = MpAppid
 	}
 
-	fmt.Println(res.PrepayId)
-
-	return payInfo, err 		
-}
-
-// 设置签名
-func CreateSign(sign SignMap, key string) string {
-	// 1.字典序排列, 拼接字符串
-	var arr []string
-	for k, _ := range sign {
-		arr = append(arr, k)
-	}
-	sort.Strings(arr)
-	var sa []string
-
-	fmt.Println(arr)
-
-	for _, v := range arr{
-		if sign[v] != ""{
-			// str := v + "=" + url.QueryEscape(sign[v])
-			str := v + "=" + sign[v]
-			sa = append(sa, str)
-		}
-	}
-	strs := strings.Join(sa, "&")
-	//2.拼接密钥
-	strs = strs + "&key=" + key
-
-	fmt.Println("签名string:", strs)
-
-	h := md5.New()
-	h.Write([]byte(strs))
-
-	strs =  hex.EncodeToString(h.Sum(nil))
-
-	fmt.Println("strs:", strs)
-	return strings.ToUpper(strs)
-}
-
-func Sha1Sign(sign SignMap) string {
-	var arr []string
-	for k, _ := range sign {
-		arr = append(arr, k)
-	}
-	sort.Strings(arr)
-	var sa []string
-	for _, v := range arr{
-		if sign[v] != ""{
-			// str := v + "=" + url.QueryEscape(sign[v])
-			str := v + "=" + sign[v]
-			sa = append(sa, str)
-		}
-	}
-	strs := strings.Join(sa, "&")
-	fmt.Println("签名string:", strs)
-	r := sha1.Sum([]byte(strs))
-	return hex.EncodeToString(r[:])
-}
-
-
-// 设置时间戳
-func GetStampString() string{
-	ts64 := time.Now().Unix()
-	return strconv.FormatInt(ts64,10)
-}
-
-// 随机字符串
-func CreateNonceStr(length int) string {
-   str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-   bytes := []byte(str)
-   result := []byte{}
-   r := rand.New(rand.NewSource(time.Now().UnixNano()))
-   for i := 0; i < length; i++ {
-      result = append(result, bytes[r.Intn(len(bytes))])
-   }
-   return string(result)
-}
-
-// future 
-// 把响应转为目标结构体
-func XmlRespTo() {
-	
+	return &Pay{appid:appid}
 }

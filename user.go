@@ -45,7 +45,7 @@ func GetUser(token string, users User) (User, error) {
 }
 
 //批量获取用户信息
-func GetUserList(token string, []map[string]string) ([]User, eror) {
+func GetUserList(token string, ids []map[string]string) ([]User, eror) {
 	users := make(Users)
 	users["user_list"] = users
 	url := "https://api.weixin.qq.com/cgi-bin/user/info/batchget?access_token=" + token
@@ -55,7 +55,7 @@ func GetUserList(token string, []map[string]string) ([]User, eror) {
 	}
 
 	var userList UserList
-	err := NewRequest(&userList).JsonPost(url)
+	err = NewRequest(&userList).JsonPost(url)
 	if err != nil {
 		return nil, err
 	}

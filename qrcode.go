@@ -25,9 +25,9 @@ type Qrcode struct {
 // {"action_name": "QR_LIMIT_STR_SCENE", "action_info": {"scene": {"scene_str": "test"}}}
 // 
 
-func Qrc(jsonString string) Qrcode {
+func QrCode(jsonString string) Qrcode {
 	return &Qrcode{
-		JsonString:jsonString
+		JsonString:jsonString,
 	}
 }
 
@@ -41,8 +41,8 @@ func (q *Qrcode)Resp() (QrcResp, error) {
 	return resp, nil
 } 
 
-// func (q *Qrcode) DownLoad(savePath string) {
-// 	resp, err  :=  q.Resp()
-// 	imgUrl := "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" + resp.Ticket 
+func (q *Qrcode) DownLoad(savePath , fileName string) {
+	resp, err  :=  q.Resp()
+	imgUrl := "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" + resp.Ticket 
 
-// }
+}

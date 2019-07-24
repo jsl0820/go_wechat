@@ -1,14 +1,5 @@
 package wechat
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
-)
-
 //发送模板信息
 const WxApi = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=ACCESS_TOKEN"
 const MpApi = "https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token=ACCESS_TOKEN"
@@ -51,7 +42,7 @@ func (t *TempMsg) Send(data map[string]string) error {
 	}
 
 	var resp TempMsgResponse
-	err := NewRequest(&resp).JsonPost(t.url)
+	err = NewRequest(&resp).JsonPost(t.url)
 	if err != nil {
 		return err
 	}

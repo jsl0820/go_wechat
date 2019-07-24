@@ -1,11 +1,6 @@
 package wechat
 
-import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-)
+
 
 type TicketResp struct {
 	ErrCode   string `json:"errcode"`
@@ -32,7 +27,7 @@ func (t *Ticket)Refresh(){
 	url += "type=jsapi&access_token=" + t
 
 	var s JsapiTicket
-	err := NewRequest(&s).Get(url)
+	err = NewRequest(&s).Get(url)
 	if err != nil {
 		return nil, error
 	}
@@ -66,13 +61,11 @@ func (t *Ticket) Clear() {
 	}
 }
 
-
 type JsSdkConfig struct {
 	Jt        string
 	Url       string
 	SingnData map[string]string
 }
-
 
 func (j *JsSdkConfig)Get() map[string]string {
 
@@ -83,7 +76,7 @@ func (j *JsSdkConfig)Get() map[string]string {
 		url:       j.Url,
 		noncestr:  nonceStr,
 		timestamp: timeSamp,
-		jsapi_ticket : j.Ticket()
+		jsapi_ticket : j.Ticket(),
 	}
 
 	signature := j.Sign() 
@@ -95,11 +88,6 @@ func (j *JsSdkConfig)Get() map[string]string {
 	}
 }
 
-
-//实例化
-func NewJsSdkConfig(url string) NewJsSdkConfig {
-	return &NewJsSdkConfig{Url:url}
-}
 
 func init() {
 	go ticket.Clear()		
