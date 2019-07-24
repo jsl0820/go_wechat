@@ -9,7 +9,7 @@ type IpListResp struct {
 }
 
 func IpList(token string) (IpListResp, error) {
-	url = "https: //api.weixin.qq.com/cgi-bin/getcallbackip?access_token=" + token
+	url := "https: //api.weixin.qq.com/cgi-bin/getcallbackip?access_token=" + token
 
 	var resp IpListResp
 	err := NewRequest(&resp).Get(url)

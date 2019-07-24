@@ -9,19 +9,36 @@ import (
 
 )
 
-func NewRequest(v interface{}) {
-	return &Request{
+func NewRequest(v interface{}) *Request {
+	return &HttpRequest{
 		RespStruct: v,
 	}
 }
 
-type Request struct {
-	Response []byte
+type HttpRequest struct {
 	RespStruct interface{}
+	request http.Request
 }
 
-func (r *Request) Get(url string) error {
-	resp, err := http.Get(url)
+//请求体
+func (r *HttpRequest)Body(data interface{}) *HttpRequest {
+	switch t := data.(type){
+	case string :
+		bf := bytes.NewBufferString(t)
+		r.request.Body = ioutil.NopCloser(bf)
+		r.request.ContentLength = int64(len(t))
+	case []byte:
+		bf := bytes.NewBuffer(t)
+		r.request.Body = ioutil.NopCloser(bf)
+		r.request.ContentLength = int64(len(t))	
+	}
+
+	return r
+}
+
+func (r *HttpRequest) Get(url string) error {
+
+	resp, err := http.Get(url,)
 
 	if err != nil {
 		return  err
@@ -33,12 +50,13 @@ func (r *Request) Get(url string) error {
 	if err != nil {
 		return  err
 	}
-	return json.Unmarshal(body,r.RespStruct)
+	return json.Unmarshal(b, r.RespStruct)
 }
 
 
-func (r *Request) Post(url string)  error {
-	resp, err := http.Post(url)
+func (r *HttpRequest) Post(url string)  error {
+
+	resp, err := http.Post(url, )
 	if err != nil {
 		return  err
 	}

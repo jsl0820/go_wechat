@@ -45,7 +45,7 @@ func GetUser(token string, users User) (User, error) {
 }
 
 //批量获取用户信息
-func GetUserList(token string, ids []map[string]string) ([]User, eror) {
+func GetUserList(token string, ids []map[string]string) ([]User, error) {
 	users := make(Users)
 	users["user_list"] = users
 	url := "https://api.weixin.qq.com/cgi-bin/user/info/batchget?access_token=" + token

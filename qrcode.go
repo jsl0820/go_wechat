@@ -31,7 +31,7 @@ func QrCode(jsonString string) Qrcode {
 	}
 }
 
-func (q *Qrcode)Resp() (QrcResp, error) {
+func (q *Qrcode)Get() (QrcResp, error) {
 	var resp QrcResp
 	url := "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=" + q.token
 	err := NewRequest(&resp).JsonPost(q.JsonString, url)

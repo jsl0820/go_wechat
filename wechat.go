@@ -5,7 +5,6 @@ var WxAppSecret string
 var MpAppid string
 var MpAppsecret string
 
-var token string
 
 func init() {
 	WxAppId = "wx75d0a800a00671a1"

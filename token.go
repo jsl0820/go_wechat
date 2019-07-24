@@ -65,7 +65,7 @@ func (t *Token) Get() (string, error) {
 }
 
 //定期清空 时间间隔为 TokenGcTime
-func (t.Token) clear() {
+func (t *Token) clear() {
 	duration := time.Duration(t.Expires) * time.Second
 	for {
 		<-time.After(duration)

@@ -21,7 +21,6 @@ type UnifiedResp struct {
 
 //统一下单接口
 type Unified struct {
-	PrepayId string
 	Resp UnifiedResp
 	Param map[string]string
 	PayInfo map[string]string
@@ -94,7 +93,6 @@ type QueryResp struct {
 	CouponCount  string `xml:"coupon_count"`
 	CouponType string `xml:"coupon_type_$n"`
 	CouponId string `xml:"coupon_id_$n"`
-	CouponFee string `xml:"coupon_fee_$n"`
 	TransactionId string `xml:"transaction_id"`
 	UutTradeNo string `xml:"out_trade_no"`
 	Attach string `xml:"attach"`
@@ -190,7 +188,6 @@ type RefundQueryResp struct {
 	TotalRefundCount int `xml:"total_refund_count"`
 	TransactionId string `xml:"transaction_id"`
 	OutTradeNo string `xml:"out_trade_no"`
-	TransactionId string `xml:"transaction_id"`
 	TotalFee 	string `xml:"total_fee"`
 	SettlementTotalFee string `xml:"settlement_total_fee"`
 	FeeType string `xml:"fee_type"`
