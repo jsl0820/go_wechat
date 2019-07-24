@@ -23,27 +23,27 @@ type UnifiedResp struct {
 type Unified struct {
 	PrepayId string
 	Resp UnifiedResp
-	config map[string]string
+	Param map[string]string
 	PayInfo map[string]string
 }
 
 func(u *Unified)Mp(){
-	u.config["appid"] = MpAppid
+	u.Param["appid"] = MpAppid
 	u.PayInfo["appid"] = MpAppid
 }
 
 func(u *Unified)Wx(){
-	u.config["appid"] = WxAppId
+	u.Param["appid"] = WxAppId
 	u.PayInfo["appid"] = WxAppId
 }
 
 func(u *Unified)PrepayId() string {
-	u.config["mch_id"] = MchId
-	stringSign = StringSign(p.config) + "&key=" + PayKey
+	u.Param["mch_id"] = MchId
+	stringSign = StringSign(p.Param) + "&key=" + PayKey
 	sign := strings.ToUpper(Md5(stringSign))
-	u.config["sign"] :=  sign
+	u.Param["sign"] :=  sign
 
-	xml := MapToXml(p.config)
+	xml := MapToXml(p.Param)
 	url := "https://api.mch.weixin.qq.com/pay/unifiedorder"
 
 	var resp UnifiedResp
@@ -55,7 +55,7 @@ func(u *Unified)PrepayId() string {
 func(u *Unified)Get()map[string]string{
 
 	u.PayInfo["signType"] = "MD5" 
-	u.PayInfo["appId"] = p.config["appid"]
+	u.PayInfo["appId"] = p.param["appid"]
 	u.PayInfo["timeStamp"] = StampString()
 	u.PayInfo["nonceStr"] = NonceStringGenerator(32)
 	u.PayInfo["package"] = "prepay_id=" + res.PrepayId()
@@ -178,47 +178,179 @@ type RefundResp struct {
 }
 
 
+type RefundQueryResp struct {
+	ReturnCode string `xml:"ReturnCode"`
+	ReturnMsg  string `xml:"return_code"`
+	ErrCode    string `xml:"err_code"`
+	ErrCodeDes string `xml:"err_code_des"`
+	AppId 	   string `xml:"appid"`
+	MchId      string `xml:"mch_id"`
+	NonceStr   string `xml:"nonce_str"` 
+	Sign 	   string `xml:"sign"`
+	TotalRefundCount int `xml:"total_refund_count"`
+	TransactionId string `xml:"transaction_id"`
+	OutTradeNo string `xml:"out_trade_no"`
+	TransactionId string `xml:"transaction_id"`
+	TotalFee 	string `xml:"total_fee"`
+	SettlementTotalFee string `xml:"settlement_total_fee"`
+	FeeType string `xml:"fee_type"`
+	CashFee string `xml:"cash_fee"`
+	RefundCount int `xml:"refund_count"`
+	OutRefundNo string `xml:"out_refund_no"`
+	RefundId string `xml:"refund_id"`
+	RefundChannelNn string `xml:"refund_channel_$n"`
+	RefundFee	int `xml:"refund_fee"`
+	SettlementRefundFee int `xml:"settlement_refund_fee"`
+	CouponTypeNM 	string `xml:"coupon_type_$n_$m"`
+	CouponRefundFeeN int `xml:"coupon_refund_fee_$n"`
+	CouponRefundCountN int `xml:"coupon_refund_count_$n"`
+	CouponRefundIdNM string `xml:"coupon_refund_id_$n_$m"`
+	CouponRefundFeeNM	string `xlm:"coupon_refund_fee_$n_$m"`
+	RefundStatusN string `xml:"refund_status_$n"`
+	RefundAccountN string `xml:"refund_account_$n"`
+	RefundRecvAccoutN string `xml:"refund_recv_accout_$n"`
+	RefundSuccessTimeN string `xml:"refund_success_time_$n"`
+}
 
-//支付
-type Pay struct {
+
+//退款
+type Refund struct {
+	appid string
+	mchId string
+	orderType string
+	orderNum  string
+}
+
+//申请退款
+func(r *Refund) Apply( info map[string]string) RefundQueryResp{
+	info[r.orderType] = r.order
+	info["appid"] =  r.appid
+	info["mch_id"] = r.mchId
+	info["nonce_str"] = NonceStringGenerator(32)
+	info["sign"] = PaySign(info)
+
+	body := MapToXml(info)
+	url := "https://api.mch.weixin.qq.com/secapi/pay/refund"
+
+	var resp RefundQueryResp
+	NewRequest(&resp).Get(body, url)
+	return resp
+}
+
+//查询退款
+func(r *Refund) Query(info map[string]string) RefundQueryResp {
+	var resp RefundQueryResp
+	body := MapToXml(r.Param)
+	url := "https://api.mch.weixin.qq.com/pay/refundquery"
+
+	var resp RefundQueryResp
+	NewRequest(&resp).XmlPost(body, url)
+	return resp
+}
+
+
+//下载对账单
+type DownLoadBillResp struct {
+	ReturnCode string `xml:"ReturnCode"`
+	ReturnMsg  string `xml:"return_code"`
+	ErrCode    string `xml:"err_code"`	
+	ErrCodeDes string `xml:"err_code_des"`
+}
+
+//账单
+type  Bill struct{
+	Param map[string]string
+	Resp DownLoadBillResp
+}
+
+//
+func(b *Bill)Get(billType, date string)Bill{
+	b.Param["bill_date"] = date	
+	b.Param["bill_type"] = billType	
+	b.Param["sign"] = PaySign(b.Param)
+
+	url := "https://api.mch.weixin.qq.com/pay/downloadbill"
+	body := MapToXml(b.Param)
+
+	var resp DownLoadBillResp
+	NewRequest(&resp).XmlPost(body, url)
+	return b	
+}
+
+//保存
+func (b *Bill)SaveAs(path string,  fileName string) {
 	
 }
 
-func(p *Pay)PrepayId() string {
-	p.config["mch_id"] = MchId
-	stringSign = StringSign(p.config) + "&key=" + PayKey
-	sign := strings.ToUpper(Md5(stringSign))
-	p.config["sign"] :=  sign
 
-	xml := MapToXml(p.config)
-	url := "https://api.mch.weixin.qq.com/pay/unifiedorder"
+//支付
+type Pay struct {
+	appid string
+}
 
-	var resp UnifiedResp
-	err := NewRequest(&resp).XmlPost(url)
-	p.Resp = resp
-	return  resp.PrepayId
+//统一下单
+func(p *Pay)Unified(param map[string]string)Unified{
+	return &Unified{Param:param }
+} 
+
+//订单查询
+func (p *Pay)Query(codeType, code string) Query {
+	param := make(map[string]string)
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+	param[codeType] = code
+	return &Query{Param : param }
+}
+
+//关闭订单
+func (p *Pay)Close(codeType, code string)CloseResp{
+	param := make(map[string]string)
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+	param[codeType] = code
+	param["sign"] = PaySign(param) 
+	body := MapToXml(param)
+	url := "https://api.mch.weixin.qq.com/pay/closeorder"
+	var resp CloseResp
+	NewRequest(&resp).XmlPost(body, url)
 }
 
 
-func(p *Pay)Get()map[string]string{
+//申请退款
+func (p *Pay)Refund(codeType, code string) QueryResp {
+	param := make(map[string]string)
 
-	p.PayInfo["signType"] = "MD5" 
-	p.PayInfo["appId"] = p.config["appid"]
-	p.PayInfo["timeStamp"] = StampString()
-	p.PayInfo["nonceStr"] = NonceStringGenerator(32)
-	p.PayInfo["package"] = "prepay_id=" + res.PrepayId()
+	param["appid"] = p.appid
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+	param[codeType] = code
 
-	stringSign := StringSign(p.PayInfo) + "&key=" + PayKey
-	sign = Md5(stringSign)
-
-	p.PayInfo["paySign"] = strings.Upper(sign)
-
-	return p.PayInfo
+	body := MapToXml(param)
+	url := "https://api.mch.weixin.qq.com/pay/closeorder"
+	var resp CloseResp
+	NewRequest(&resp).XmlPost(body, url)
 }
 
-func PayConfig(config map[string]string) Pay {
-	return &Pay{sign : config }
+
+//查询退款
+func(p *Pay)RefundQuery(codeType, code string) QueryResp {
+	param["appid"] = p.appid
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+
+	return &{Param:param}
 }
+
+//下载对账单
+func(p *Pay)Bill(){
+	param := make(map[string]string)
+	param["appid"] = p.appid
+	param["mch_id"] = MchId
+	param["nonce_str"] = NonceStringGenerator(32)
+
+	return &Bill{Param:param }
+}
+
 
 
 //支付签名
@@ -226,4 +358,19 @@ func PaySign(param map[string]string) string{
 	stringSign = StringSign(p.config) + "&key=" + PayKey
 	sign = Md5(stringSign)
 	return strings.TouUpper(sign)
+}
+
+
+func NewPay(plat string){
+
+	var appid string
+	if plat == "wx"{
+		appid = WxAppId 
+	}
+
+	if plat == "mp"{
+		appid = MpAppid
+	}
+
+	return &Pay{appid:appid}
 }
