@@ -8,14 +8,15 @@ type IpListResp struct {
 	IpList  []string `json:"ip_list"`
 }
 
-func IpList(token string) (IpListResp, error) {
-	url := "https: //api.weixin.qq.com/cgi-bin/getcallbackip?access_token=" + token
-
+func IpList() ([]string, error) {
+	t, err  := token.Get()
+	url := "https://api.weixin.qq.com/cgi-bin/getcallbackip?access_token=" + t
 	var resp IpListResp
-	err := NewRequest(&resp).Get(url)
+	err = NewRequest().Get(url).JsonResp(&resp)
+	
 	if err != nil {
 		return nil, err
 	}
 
-	return IpListResp, nil
+	return resp.IpList, nil
 }

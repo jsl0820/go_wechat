@@ -5,6 +5,7 @@ var WxAppSecret string
 var MpAppid string
 var MpAppsecret string
 
+const  HOST = "https://api.weixin.qq.com"
 
 func init() {
 	WxAppId = "wx75d0a800a00671a1"

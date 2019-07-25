@@ -29,10 +29,9 @@ var token = &Token{Expires: 7200}
 //刷新token
 func (t *Token) Refresh() error {
 
-	url := "https://api.weixin.qq.com/cgi-bin/token?"
+	url := HOST + "/cgi-bin/token?"
 	url += "grant_type=client_credential&appid=" + WxAppId + "&secret=" + WxAppSecret
-
-	err := NewRequest(&t.At).Get(url)
+	err := NewRequest().Get(url).Resp(&t.At)
 	if err != nil {
 		return err
 	}
@@ -61,7 +60,7 @@ func (t *Token) Get() (string, error) {
 		}
 	}
 
-	return t.At.AccessToken
+	return t.At.AccessToken , nil
 }
 
 //定期清空 时间间隔为 TokenGcTime

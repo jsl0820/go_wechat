@@ -1,6 +1,9 @@
 package wechat
 
-
+import (
+	"fmt"
+	"time"
+)
 
 type TicketResp struct {
 	ErrCode   string `json:"errcode"`
@@ -11,42 +14,44 @@ type TicketResp struct {
 
 var ticket = &Ticket{expires:7200}
 
+
 type Ticket struct {
 	expires int
 	Resp TicketResp 
 }
 
 //刷新
-func (t *Ticket)Refresh(){
-	t, err := token.Get()
+func (t *Ticket)Refresh()(TicketResp, error){
+	tk, err := token.Get()
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
 	}
 
-	url := "https://api.weixin.qq.com/cgi-bin/ticket/getticket?"
-	url += "type=jsapi&access_token=" + t
+	url := HOST + "/cgi-bin/ticket/getticket?type=jsapi&access_token=" + tk
+	var s TicketResp
+	err = NewRequest().Get(url).JsonResp(&s)
 
-	var s JsapiTicket
-	err = NewRequest(&s).Get(url)
 	if err != nil {
-		return nil, error
+		return s, err
 	}
 
 	return s, nil	
 }
 
 //获取票据
-func (t *Ticket) Get() (string, error){
-
+func (t *Ticket) Get() string {
 	if 	t.Resp == (TicketResp{}){
-		t.Resp, err = t.Refresh()
+		resp, err := t.Refresh()
 		if err != nil {
-			return nil , err
+			fmt.Println(err)
+			return ""
 		}
-		return  t.Resp.Ticket , nil 
+
+		t.Resp = resp
+		return  t.Resp.Ticket 
 	} 	
 
-	return t.Resp.Ticket, nil
+	return t.Resp.Ticket
 }
 
 
@@ -61,30 +66,43 @@ func (t *Ticket) Clear() {
 	}
 }
 
-type JsSdkConfig struct {
-	Jt        string
-	Url       string
-	SingnData map[string]string
+
+type JsConfigConfig struct{
+	TimeStamp string `json:"timesamp"`	
+	NonceStr string  `json:"noncestr"`
+	Signature string `json:"signature"`
 }
 
-func (j *JsSdkConfig)Get() map[string]string {
+func NewJsSdk(url string) *JsSdk{
+	config := &JsConfigConfig{}
+	return &JsSdk{SdkConfig:config}
+}
+
+type JsSdk struct {
+	Url       string
+	config map[string]string
+	SdkConfig *JsConfigConfig
+}
+
+func (j *JsSdk)Get() map[string]string {
 
 	timeSamp := StampString()
-	nonceStr := CreateNonceStr()
+	nonceStr := NonceStringGenerator(32)
 
-	j.SingnData = map[string]string{
-		url:       j.Url,
-		noncestr:  nonceStr,
-		timestamp: timeSamp,
-		jsapi_ticket : j.Ticket(),
+	j.config = map[string]string{
+		"url":       j.Url,
+		"noncestr":  nonceStr,
+		"timestamp": timeSamp,
+		"jsapi_ticket" : ticket.Get(),
 	}
 
-	signature := j.Sign() 
+	stringSign := StringSign(j.config)
+	signature := Sha1Sign(stringSign)
 
 	return map[string]string{
-		timesamp : timeSamp,
-		noncestr : nonceStr,
-		signature : signature,
+		"timesamp" : timeSamp,
+		"noncestr" : nonceStr,
+		"signature" : signature,
 	}
 }
 

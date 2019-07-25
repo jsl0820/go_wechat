@@ -2,22 +2,24 @@ package wechat
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"bytes"
 	"io/ioutil"
 	"net/http"
-	"errors"
-
+	// "errors"
+	"net/url"
+	"fmt"
+	// "log"
 )
 
-func NewRequest(v interface{}) *Request {
-	return &HttpRequest{
-		RespStruct: v,
-	}
+
+func NewRequest() *HttpRequest {
+	return &HttpRequest{}
 }
 
 type HttpRequest struct {
-	RespStruct interface{}
 	request http.Request
+	response http.Response
 }
 
 //请求体
@@ -32,89 +34,72 @@ func (r *HttpRequest)Body(data interface{}) *HttpRequest {
 		r.request.Body = ioutil.NopCloser(bf)
 		r.request.ContentLength = int64(len(t))	
 	}
-
 	return r
 }
 
-func (r *HttpRequest) Get(url string) error {
+//设置header
+func (r *HttpRequest)Header(key , value string)*HttpRequest{
+	r.request.Header.Set(key, value)
+	return r
+}
 
-	resp, err := http.Get(url,)
-
+func (r *HttpRequest) Get(urlString string) *HttpRequest {
+	u, err := url.Parse(urlString)
 	if err != nil {
-		return  err
+		fmt.Println(err)
+	}
+
+	r.request.URL = u
+	r.request.Method = "GET"
+	return r
+}
+
+func (r *HttpRequest) Post(urlString string)  *HttpRequest {
+	u, err := url.Parse(urlString)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	r.request.URL = u
+	r.request.Method = "POST"
+	return r
+}
+
+//发起请求
+func (r *HttpRequest) do() (*http.Response, error) {
+	clinet := &http.Client{}
+	return clinet.Do(&r.request)
+}
+
+//返回Bytes类型
+func (r *HttpRequest)Bytes()([]byte, error){
+	resp, err := r.do()
+	if err != nil {
+		return nil, err
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	return ioutil.ReadAll(resp.Body)
+}
 
+//
+func(r *HttpRequest)JsonResp(data interface{}) (err error) {
+	b, err := r.Bytes()
 	if err != nil {
-		return  err
+		fmt.Println(err)
 	}
-	return json.Unmarshal(b, r.RespStruct)
+
+	return json.Unmarshal(b, data)
+}
+
+//
+func(r *HttpRequest)XmlResp(data interface{}) (err error) {
+	b, err := r.Bytes()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return xml.Unmarshal(b, data)
 }
 
 
-func (r *HttpRequest) Post(url string)  error {
-
-	resp, err := http.Post(url, )
-	if err != nil {
-		return  err
-	}
-
-	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return  err
-	}
-	return json.Unmarshal(body,r.RespStruct)
-}
-
-//用xml数据请求
-func (r *Request) XmlPost(xmlStr, url string) error {
-	req, err := http.NewRequest("POST", url, bytes.NewReader([]byte(xmlStr)))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Accept", "application/xml")
-	req.Header.Set("Content-Type", "application/xml;charset=utf-8")
-	client := http.Client{}
-	resp, err := client.Do(req)
-	if (err != nil){
-		return err
-	}		
-
-	return xml.Unmarshal(respBytes, r.RespStruct)
-}
-
-
-//用xml数据请求
-func (r *Request) JsonPost(body interface{}, url string) error {
-	
-	var bodyByte []byte
-
-	switch body.(type) {
-	case string:
-		bodyByte = []byte(body)
-	case []byte:
-		bodyByte = body
-	default:
-		return errors.New("参数类型错误！")
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyByte))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Accept", "application/xml")
-	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
-	client := http.Client{}
-	resp, err := client.Do(req)
-	if (err != nil){
-		return err
-	}		
-
-	return json.Unmarshal(respBytes, r.RespStruct)
-}

@@ -43,7 +43,7 @@ func(u *Unified)PrepayId() string {
 	u.Param["sign"] =  sign
 
 	xml := MapToXml(p.Param)
-	url := "https://api.mch.weixin.qq.com/pay/unifiedorder"
+	url := HOST + "/pay/unifiedorder"
 
 	var resp UnifiedResp
 	err := NewRequest(&resp).XmlPost(xml, url)

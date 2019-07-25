@@ -1,13 +1,18 @@
 package wechat
 
+import (
+	"encoding/json"
+	"errors"
+)
+
 //发送模板信息
-const WxApi = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=ACCESS_TOKEN"
-const MpApi = "https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token=ACCESS_TOKEN"
+// var tpMsgWxApi = HOST + "/cgi-bin/message/template/send?access_token=ACCESS_TOKEN"
+// var tpMsgMpApi = HOST + "/cgi-bin/message/wxopen/template/send?access_token=ACCESS_TOKEN"
 
 type TempMsgCfg map[string]interface{}
 
 //模板信息返回数据
-type TempMsgResponse struct {
+type TempMsgResp struct {
 	ErrCode int    `json:"errcode"`
 	ErrMsg  string `json:"errmsg"`
 	Msgid   string `json:"msgid"`
@@ -23,14 +28,13 @@ type TempMsg struct {
 //公众号消息
 func (t *TempMsg) Wx(cfg TempMsgCfg, token string) {
 	t.plate = 0
-	t.url = WxApi
+	t.url = HOST + "/cgi-bin/message/template/send?access_token=ACCESS_TOKEN"
 }
 
 //小程序消息
-func (t *TempMsg) Mp(cfg TempMsgCfg, token string) TempMsg {
+func (t *TempMsg) Mp(cfg TempMsgCfg, token string)  {
 	t.plate = 1
-	t.url = MpApi
-	return t
+	t.url = HOST + "/cgi-bin/message/wxopen/template/send?access_token=ACCESS_TOKEN"
 }
 
 //发送
@@ -41,8 +45,8 @@ func (t *TempMsg) Send(data map[string]string) error {
 		return err
 	}
 
-	var resp TempMsgResponse
-	err = NewRequest(&resp).JsonPost(t.url)
+	var resp TempMsgResp
+	err = NewRequest().Get(t.url).JsonResp(&resp)
 	if err != nil {
 		return err
 	}
