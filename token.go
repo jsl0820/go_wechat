@@ -3,6 +3,7 @@ package wechat
 import (
 	// "fmt"
 	"time"
+	"errors"
 )
 
 const (
@@ -31,7 +32,7 @@ func (t *Token) Refresh() error {
 
 	url := HOST + "/cgi-bin/token?"
 	url += "grant_type=client_credential&appid=" + WxAppId + "&secret=" + WxAppSecret
-	err := NewRequest().Get(url).Resp(&t.At)
+	err := NewRequest().Get(url).JsonResp(&t.At)
 	if err != nil {
 		return err
 	}
@@ -40,27 +41,27 @@ func (t *Token) Refresh() error {
 
 //获取token
 func (t *Token) Get() (string, error) {
-	if t.AccessToken == (AccessToken{}) {
+	if t.At == (AccessToken{}) {
 		err := t.Refresh()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 
 		switch t.At.Errcode {
 		case -1:
-			return errors.New(TOKEN_ERROR_1)
+			return "", errors.New(TOKEN_ERROR_1)
 		case 40001:
-			return errors.New(TOKEN_ERROR_2)
+			return "", errors.New(TOKEN_ERROR_2)
 		case 40002:
-			return errors.New(TOKEN_ERROR_3)
+			return "", errors.New(TOKEN_ERROR_3)
 		case 40164:
-			return errors.New(TOKEN_ERROR_4)
+			return "", errors.New(TOKEN_ERROR_4)
 		default:
-			return t.At.AccessToken
+			return t.At.AccessToken, nil
 		}
 	}
 
-	return t.At.AccessToken , nil
+	return t.At.AccessToken , nil 
 }
 
 //定期清空 时间间隔为 TokenGcTime

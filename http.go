@@ -82,7 +82,7 @@ func (r *HttpRequest)Bytes()([]byte, error){
 	return ioutil.ReadAll(resp.Body)
 }
 
-//
+//返回json数据解析到结构体
 func(r *HttpRequest)JsonResp(data interface{}) (err error) {
 	b, err := r.Bytes()
 	if err != nil {
@@ -92,7 +92,7 @@ func(r *HttpRequest)JsonResp(data interface{}) (err error) {
 	return json.Unmarshal(b, data)
 }
 
-//
+//返回xml数据解析到结构体
 func(r *HttpRequest)XmlResp(data interface{}) (err error) {
 	b, err := r.Bytes()
 	if err != nil {

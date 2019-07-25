@@ -1,6 +1,11 @@
 package wechat
 
-type UserResq struct {
+import (
+	"fmt"
+	"encoding/json"
+)
+
+type UserResp struct {
 	ErrCode int    `json:"errcode"`
 	ErrMsg  string `json:"errmsg"`
 }
@@ -25,41 +30,77 @@ type User struct {
 }
 
 type UserList struct {
-	UserInfoList []User `json:"user_info_list"` 
+	List []map[string]string `json:"user_list"`
 }
 
+type UserListResp struct {
+	List []User `json:"user_info_list"` 
+}
 
-type Users map[string]interface{}
+func NewUsers() *Users{
+	t, _ := token.Get()
+	return &Users{token:t}
+}
+
+//用户
+type Users struct{
+	token string
+}
+
+//用户备注
+func (u *Users)Remark(openid, remark string) bool {
+	url := HOST + "/cgi-bin/user/info/updateremark?access_token=" + u.token
+	body := `{
+		openid:{{.openid}},
+		remark:{{.remark}}
+	}`
+	
+	var resp UserResp 
+	err := NewRequest().Body(body).JsonResp(&resp)
+	if err != nil {
+		return false
+	}	
+
+	if resp.ErrCode != 0{
+		return false
+	} 
+
+	return true
+}
 
 //获取用户信息
-func GetUser(token string, users User) (User, error) {
-	url := "https://api.weixin.qq.com/cgi-bin/user/info?access_token="
-	url += token + "&openid=" + opneid + "&lang=zh_CN"
+func (u *Users)Query(openid string, lang string) (*User, bool) {
+	url := HOST + "/cgi-bin/user/info?access_token="
+	url += u.token + "&openid=" + openid + "&lang=" + lang
+
 	var user User
-	err := NewRequest(&user).Get(url)
+	err := NewRequest().Get(url).JsonResp(&user)
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
+		return nil, false 
 	}
 
-	return u, nil
+	return &user, true
 }
 
 //批量获取用户信息
-func GetUserList(token string, ids []map[string]string) ([]User, error) {
-	users := make(Users)
-	users["user_list"] = users
-	url := "https://api.weixin.qq.com/cgi-bin/user/info/batchget?access_token=" + token
-	b, err := json.Marshal(users)
+func (u *Users)QueryAll(ids []map[string]string) (*[]User, error) {
+	userQuery := &UserList{
+		List : ids,
+	}
+
+	url := HOST + "/cgi-bin/user/info/batchget?access_token=" + u.token
+	b, err := json.Marshal(userQuery)
 	if err != nil {
 		return nil, err		
 	}
 
-	var userList UserList
-	err = NewRequest(&userList).JsonPost(url)
+	var userList UserListResp
+	err = NewRequest().Body(b).JsonResp(&userList)
 	if err != nil {
 		return nil, err
 	}
 
-	return userList, nil
+	return &userList.List, nil
 }
 

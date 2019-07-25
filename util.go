@@ -3,6 +3,12 @@ package wechat
 import (
 	"time"
 	"strconv"
+	"math/rand"
+	"strings"
+	"sort"
+	"crypto/md5"
+	"encoding/hex"
+	"crypto/sha1"
 )
 
 // 设置时间戳
@@ -40,16 +46,21 @@ func NonceStringGenerator(length int) string {
 func ToString(value interface{}) string {
    switch value.(type){
    case string:
-    	return value   
+    	return value.(string)   
    case int32:
-    	return strconv.Itoa(value)	
+		v := value.(int)
+    	return strconv.Itoa(v)	
    case int64:
-   		return strconv.FormatInt(int64,10)
+		v := value.(int64)
+   		return strconv.FormatInt(v,10)
    case float32:
-   		return strconv.FormatFloat(value, 'f', -1, 32)
+		v := value.(float32)
+   		return strconv.FormatFloat(v, 'f', -1, 32)
    case float64:	
-   		return strconv.FormatFloat(value, 'f', -1, 64)		 		   
+		v := value.(float64)
+   		return strconv.FormatFloat(v, 'f', -1, 64)		 		   
    }
+   return ""
 }
 
 
@@ -59,7 +70,6 @@ func StringSign(data map[string]string) string {
 	for k, v := range data {
 		a = append(a, k + "=" + v)
 	}
-
 	sort.Strings(a)
 	return strings.Join(a, "&")
 }
@@ -73,17 +83,15 @@ func Md5(singString string)string{
 
 //签名
 func Sha1Sign(stringSign string) string {
-	r := sha1.Sum([]byte(strs))
+	r := sha1.Sum([]byte(stringSign))
 	return hex.EncodeToString(r[:])
 }	
 
-
-//map
+//map转xml字符串
 func MapToXml(data map[string]string) string {
 	var xml = `<xml>`
-	for k, v := range data{
-		i = `<{{.k}}>` + v + `<{{.v}}>`
-		xml += v
+	for k, v := range data {
+		xml += `<`+ k + `>` + v + `<` + k + `>`
 	}	
 	xml += `</xml>`
 	return xml

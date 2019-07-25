@@ -1,8 +1,12 @@
 package wechat
 
 import (
-
+	"strings"
+	"errors"
+	"fmt"
 )
+
+const PAY_HOST = "https://api.mch.weixin.qq.com"
 
 
 type UnifiedResp struct {
@@ -38,15 +42,15 @@ func(u *Unified)Wx(){
 
 func(u *Unified)PrepayId() string {
 	u.Param["mch_id"] = MchId
-	stringSign = StringSign(p.Param) + "&key=" + PayKey
+	stringSign := StringSign(u.Param) + "&key=" + PayKey
 	sign := strings.ToUpper(Md5(stringSign))
 	u.Param["sign"] =  sign
 
-	xml := MapToXml(p.Param)
+	xml := MapToXml(u.Param)
 	url := HOST + "/pay/unifiedorder"
 
 	var resp UnifiedResp
-	err := NewRequest(&resp).XmlPost(xml, url)
+	err := NewRequest().Get(url).XmlResp(&resp)
 	u.Resp = resp
 	return  resp.PrepayId
 }
@@ -54,13 +58,13 @@ func(u *Unified)PrepayId() string {
 func(u *Unified)Get()map[string]string{
 
 	u.PayInfo["signType"] = "MD5" 
-	u.PayInfo["appId"] = p.param["appid"]
+	u.PayInfo["appId"] = u.Param["appid"]
 	u.PayInfo["timeStamp"] = StampString()
 	u.PayInfo["nonceStr"] = NonceStringGenerator(32)
-	u.PayInfo["package"] = "prepay_id=" + res.PrepayId()
+	u.PayInfo["package"] = "prepay_id=" + u.PrepayId()
 
 	stringSign := StringSign(u.PayInfo) + "&key=" + PayKey
-	sign = Md5(stringSign)
+	sign := Md5(stringSign)
 
 	u.PayInfo["paySign"] = strings.ToUpper(sign)
 
@@ -98,10 +102,10 @@ type QueryResp struct {
 	Attach string `xml:"attach"`
 	TimeEnd string `xml:"time_end"`
 	TradeStateDesc string `xml:"trade_state_desc"`
-
 }
 
 type Query struct {
+	appid string
 	Param map[string]string
 }
 
@@ -112,7 +116,7 @@ func (q *Query)config(plat string) error {
 		return nil 
 	}
 
-	if plate == "wx" {
+	if plat == "wx" {
 		q.Param["appid"]  = WxAppId
 		return nil 
 	}
@@ -120,16 +124,22 @@ func (q *Query)config(plat string) error {
 	return errors.New("请输入正确的参数！")
 }	
 
-func (q *Query)Get(codeType , code string)(QueryResp, error){
+func (q *Query)Get(codeType , code string)(*QueryResp, error){
+	q.Param["appid"] = q.appid
 	q.Param[codeType] = code
 	q.Param["mch_id"] = MchId
 	q.Param["nonce_str"] = NonceStringGenerator(32)
 	q.Param["sign"] = PaySign(q.Param)
 
 	body := MapToXml(q.Param)
-	url := "https://api.mch.weixin.qq.com/pay/orderquery"
+	url := PAY_HOST + "/pay/orderquery"
 	var resp QueryResp
-	return NewRequest(&resp).XmlPost(body, url)
+	err := PayRequest(url, body, &resp)
+	if err != nil {
+		return nil , err
+	}
+
+	return &resp, nil
 }	
 
 
@@ -220,7 +230,7 @@ type Refund struct {
 
 //申请退款
 func(r *Refund) Apply( info map[string]string) RefundQueryResp{
-	info[r.orderType] = r.order
+	info[r.orderType] = r.orderNum
 	info["appid"] =  r.appid
 	info["mch_id"] = r.mchId
 	info["nonce_str"] = NonceStringGenerator(32)
@@ -229,18 +239,26 @@ func(r *Refund) Apply( info map[string]string) RefundQueryResp{
 	body := MapToXml(info)
 	url := "https://api.mch.weixin.qq.com/secapi/pay/refund"
 
-	resp := &RefundQueryResp{}
-	NewRequest(resp).Get(body, url)
-	return *resp
+	var resp RefundQueryResp
+	err := PayRequest(url, body, &resp)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return resp
 }
 
 //查询退款
 func(r *Refund) Query(info map[string]string) RefundQueryResp {
 	var resp RefundQueryResp
-	body := MapToXml(r.Param)
+	body := MapToXml(info)
 	url := "https://api.mch.weixin.qq.com/pay/refundquery"
 
-	NewRequest(&resp).XmlPost(body, url)
+	err := PayRequest(url, body, &resp)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	return resp
 }
 
@@ -260,7 +278,7 @@ type  Bill struct{
 }
 
 //
-func(b *Bill)Get(billType, date string)Bill{
+func(b *Bill)Get(billType, date string)*Bill{
 	b.Param["bill_date"] = date	
 	b.Param["bill_type"] = billType	
 	b.Param["sign"] = PaySign(b.Param)
@@ -268,8 +286,16 @@ func(b *Bill)Get(billType, date string)Bill{
 	url := "https://api.mch.weixin.qq.com/pay/downloadbill"
 	body := MapToXml(b.Param)
 
+	req := NewRequest().Body(body).Post(url)
+	req.Header("Accept", "application/xml")
+	req.Header("Content-Type", "application/xml;charset=utf-8")
+
 	var resp DownLoadBillResp
-	NewRequest(&resp).XmlPost(body, url)
+	err := req.XmlResp(&resp)
+	if err != nil {
+		fmt.Println(err)
+	}
+	
 	return b	
 }
 
@@ -278,19 +304,18 @@ func (b *Bill)SaveAs(path string,  fileName string) {
 	
 }
 
-
 //支付
 type Pay struct {
 	appid string
 }
 
 //统一下单
-func(p *Pay)Unified(param map[string]string)Unified{
+func(p *Pay)Unified(param map[string]string)*Unified{
 	return &Unified{Param:param }
 } 
 
 //订单查询
-func (p *Pay)Query(codeType, code string) Query {
+func (p *Pay)Query(codeType, code string) *Query {
 	param := make(map[string]string)
 	param["mch_id"] = MchId
 	param["nonce_str"] = NonceStringGenerator(32)
@@ -307,13 +332,22 @@ func (p *Pay)Close(codeType, code string)CloseResp{
 	param["sign"] = PaySign(param) 
 	body := MapToXml(param)
 	url := "https://api.mch.weixin.qq.com/pay/closeorder"
+
 	var resp CloseResp
-	NewRequest(&resp).XmlPost(body, url)
+	req := NewRequest().Body(body).Post(url)
+	req.Header("Accept", "application/xml")
+	req.Header("Content-Type", "application/xml;charset=utf-8")
+	err := req.XmlResp(&resp)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return resp
 }
 
 
 //申请退款
-func (p *Pay)Refund(codeType, code string) QueryResp {
+func (p *Pay)Refund(codeType, code string) RefundResp {
 	param := make(map[string]string)
 
 	param["appid"] = p.appid
@@ -323,13 +357,19 @@ func (p *Pay)Refund(codeType, code string) QueryResp {
 
 	body := MapToXml(param)
 	url := "https://api.mch.weixin.qq.com/pay/closeorder"
-	var resp CloseResp
-	NewRequest(&resp).XmlPost(body, url)
+	var resp RefundResp
+	
+	err := PayRequest(url, body, &resp)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return resp
 }
 
 
 //下载对账单
-func(p *Pay)Bill(){
+func(p *Pay)Bill() *Bill{
 	param := make(map[string]string)
 	param["appid"] = p.appid
 	param["mch_id"] = MchId
@@ -338,17 +378,15 @@ func(p *Pay)Bill(){
 	return &Bill{Param:param }
 }
 
-
-
 //支付签名
 func PaySign(param map[string]string) string{
-	stringSign = StringSign(p.config) + "&key=" + PayKey
-	sign = Md5(stringSign)
-	return strings.TouUpper(sign)
+	stringSign := StringSign(param) + "&key=" + PayKey
+	sign := Md5(stringSign)
+	return strings.ToUpper(sign)
 }
 
 
-func NewPay(plat string){
+func NewPay(plat string) *Pay {
 
 	var appid string
 	if plat == "wx"{
@@ -360,4 +398,18 @@ func NewPay(plat string){
 	}
 
 	return &Pay{appid:appid}
+}
+
+
+//请求
+func PayRequest(url string, body interface{},  resp interface{}) error {
+	req := NewRequest().Body(body).Post(url)
+	req.Header("Accept", "application/xml")
+	req.Header("Content-Type", "application/xml;charset=utf-8")
+	err := req.XmlResp(resp)
+	if err != nil {
+		return err 
+	}
+
+	return nil
 }

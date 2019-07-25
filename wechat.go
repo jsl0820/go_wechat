@@ -4,7 +4,8 @@ var WxAppId string
 var WxAppSecret string
 var MpAppid string
 var MpAppsecret string
-
+var MchId string
+var PayKey string
 const  HOST = "https://api.weixin.qq.com"
 
 func init() {
