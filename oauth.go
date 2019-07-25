@@ -59,12 +59,9 @@ func (o *Oauth)SetOption(code, appid, appSecret string) *Oauth {
 func(o *Oauth) GetSnsapiBase() (SnsapiBase, error) {
 	fmt.Println(Appid, AppSecret)
 	var err error
-	url := "https://api.weixin.qq.com/sns/oauth2/access_token?"
+	url := HOST + "/sns/oauth2/access_token?"
 	url += "appid=" + Appid + "&secret="+ AppSecret +"&code="+ o.Code	
 	url += "&grant_type=authorization_code"
-
-	
-	fmt.Println(url)
 
 	resp, err := http.Get(url)	
 
