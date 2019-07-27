@@ -6,6 +6,7 @@ import (
 )
 
 type CountResp struct {
+	Url string `json:"url"`
 	ErrCode int `json:"errcode"`
 	ErrMsg string `json:"errmsg"`
 	CoiceCount int `json:"voice_count"`
@@ -14,9 +15,16 @@ type CountResp struct {
 	NewsCount  int `json:"news_count"` 
 }
 
-type MediaBaseResp struct{
+type MediaResp struct{
 	ErrCode int `json:"errcode"`
 	ErrMsg string `json:"errmsg"`
+	CoiceCount int `json:"voice_count"`
+	VideoCount int `json:"video_count"`
+	ImageCount int `json:"image_count"`
+	NewsCount  int `json:"news_count"` 
+	Type string `json:"type"`
+	MediaId string `json:"media_id"`
+	CreatedAt string `json:"created_at"`
 }
 
 type UploadResp struct {
@@ -108,8 +116,33 @@ func (m *Media)UploadThumb(filename string)(string, error){
 }
 
 //下载素材
-func (m *Media)Download(id string){
+func (m *Media)Download(id, path string) error {
+	tk, err := token.Get()
+	if err != nil {
+		return err
+	}
 
+	var resp MediaResp
+	url := HOST + "/cgi-bin/media/get?access_token=" + tk + "&media_id=" + id
+	err := NewRequest().Get(url).SaveTo(path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+//获取视频
+func (m *Media)GetVedio(id string)(string, error){
+	tk, err := token.Get()
+	if err != nil {
+		return "", err
+	}
+
+	var resp MediaResp
+	url := HOST + "/cgi-bin/media/get?access_token=" + tk + "&media_id=" + id
+	err := NewRequest().Get(url).Resp(&resp)
 }
 
 //删除
@@ -153,3 +186,92 @@ func (m *Media)Count()(CountResp, error){
 	return resp, nil
 }
 
+//获取素材列表
+//t:类型 参数：'image', 'vedio', 'voice', 'news' 
+//off:偏移量 count:返回的数量
+func (m *Media) List(t, off, count string){
+
+}
+
+type Article struct {
+	Title string `json:"title"`
+	ThumbMediaId string `json:"thumb_media_id"`
+	Author string `json:"author"` 
+	Digest string `json:"digest"`
+	ShowCoverPic int `json:"show_cover_pic"`
+	Content string `json:"content"`
+	ContentSourceUrl string `json:"content_source_url"`
+	NeedOpenComment int  `json:"need_open_comment"`
+	OnlyFansCanComment int `json:"only_fans_can_comment"`
+}
+
+//上传图文
+func(a *Article)Upload()(string, error){
+	tk, err := token.Get()
+	if err !=nil {
+		return "", err
+	}
+
+	var resp &MediaResp
+	body, err := json.Marshal(*a)
+	url := HOST + "/cgi-bin/material/add_news?access_token=" + ACCESS_TOKEN
+	err := NewRequest().Body(body).Post(url).Resp(&)
+	if err != nil {
+		return "", err 
+	}
+
+	return resp.MediaId, nil
+} 
+
+//上传图文消息的图片
+func (a *Article)UploadImg(path string)(string, error){
+	tk, err := token.Get()
+	if err != nil {
+		return "", err
+	}
+
+	url := HOST + "/cgi-bin/media/uploadimg?access_token=" + tk
+	NewRequest().Upload(path).Post()
+}
+
+//获取
+func (a *Article)Get(id string){
+
+}
+
+
+
+
+
+//图片
+type Image struct {
+
+}
+
+//上传
+func (i *Image)Upload(){
+
+}
+
+//下载
+func (i *Image)Download(){
+
+}
+
+//删除
+func (i *Image)Del(){
+
+}
+
+
+//视频
+type Voice struct {
+
+}
+
+
+
+//缩略图
+type Thumb struct{
+
+}
