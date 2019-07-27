@@ -22,6 +22,8 @@ func NewRequest() *HttpRequest {
 }
 
 type HttpRequest struct {
+	files map[string]string
+	form map[string]string
 	request http.Request
 	response http.Response
 }
@@ -38,6 +40,11 @@ func (r *HttpRequest)Body(data interface{}) *HttpRequest {
 		r.request.Body = ioutil.NopCloser(bf)
 		r.request.ContentLength = int64(len(t))	
 	}
+	return r
+}
+
+//构建formData
+func (r *HttpRequest)FormData()*HttpRequest{
 	return r
 }
 
@@ -96,6 +103,23 @@ func (r *HttpRequest)String()(string, error){
 	return string(b), nil
 }
 
+//保存到
+func (r *HttpRequest)SaveTo(path string)error{
+	f, err := os.Create(path)
+	if err != nil{
+		return err
+	} 
+	defer f.Close()	
+	b, err := r.Bytes()
+	if err != nil {
+		return err
+	}
+
+	_, err := io.Copy(f, b)
+	return err 
+}
+
+
 //返回json数据解析到结构体
 func(r *HttpRequest)JsonResp(data interface{}) (err error) {
 	b, err := r.Bytes()
@@ -120,21 +144,12 @@ func(r *HttpRequest)XmlResp(data interface{}) (err error) {
 func(r *HttpRequest)Upload(filename string)*HttpRequest{
 	bf := &bytes.Buffer{}
 	w := multipart.NewWriter(bf)
-
+	defer w.Close()
 	fw, err := w.CreateFormFile("file", filepath.Base(filename))
 	fh, err := os.Open(filename)
 	defer fh.Close()
 	io.Copy(fw, fh)
-
-	contentType := w.FormDataContentType()
-	w.Close()
-	// resp, err := http.Post(url, contentType, bf)
-	// fmt.Println(resp)
-	// if err != nil {
-	// 	fmt.Println("上传错误信息：", err)
-	// 	return nil, err
-	// }
-	
+	r.request.Header("Content-Type", w.FormDataContentType())
 	return r	
 }
 

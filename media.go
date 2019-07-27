@@ -2,6 +2,7 @@ package wechat
 
 import (
 	"fmt"
+	"errors"
 )
 
 type CountResp struct {
@@ -11,6 +12,11 @@ type CountResp struct {
 	VideoCount int `json:"video_count"`
 	ImageCount int `json:"image_count"`
 	NewsCount  int `json:"news_count"` 
+}
+
+type MediaBaseResp struct{
+	ErrCode int `json:"errcode"`
+	ErrMsg string `json:"errmsg"`
 }
 
 type UploadResp struct {
@@ -101,7 +107,7 @@ func (m *Media)UploadThumb(filename string)(string, error){
 	return resp.MediaId, nil 
 }
 
-//
+//下载素材
 func (m *Media)Download(id string){
 
 }
@@ -113,17 +119,37 @@ func (m *Media)Del(id string)(bool, error){
 		return false, err
 	}
 
+	body := `{media_id:{{.id}} }`
 	url := HOST + "/cgi-bin/material/del_material?access_token=" + tk
+	var resp MediaBaseResp
+	err = NewRequest().Body(body).Post(url).JsonResp(&resp)
+	if err != nil {
+		fmt.Println(err)
+		return false, err
+	}
+
+	if resp.ErrCode != 0 {
+		return false, errors.New("操作失败：", resp.ErrMsg)
+	}
+
+	return true, nil
 }
 
 
 //统计
-func (m *Media)Count()(CountResp, err){
+func (m *Media)Count()(CountResp, error){
 	tk, err := token.Get()
 	if err != nil {
-
+		return CountResp{}, err
 	}
 
 	url := HOST + "/cgi-bin/material/get_materialcount?access_token=" + tk
+	var resp CountResp
+	err = NewRequest().Get(url).JsonResp(&resp)
+	if err != nil {
+		return resp, nil 
+	}
 
+	return resp, nil
 }
+
