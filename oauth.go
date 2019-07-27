@@ -36,23 +36,15 @@ type SnsapiUserInfo struct {
 	Errmsg     string        `json:"errmsg"`
 }
 
+func NewOauth() *Oauth {
+	return new (Oauth)	
+}
 
 type Oauth struct{
 	Code string	
 	Openid string
 	AccessToken string	
 	RefreshToken string
-}
-
-func NewOauth() *Oauth {
-	return new (Oauth)	
-}
-
-func (o *Oauth)SetOption(code, appid, appSecret string) *Oauth {
-	Appid = appid
-	AppSecret = appSecret
-	o.Code = code
-	return o	
 }
 
 // 获取SnsapiBase

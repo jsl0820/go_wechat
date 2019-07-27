@@ -10,6 +10,10 @@ import (
 	"net/url"
 	"fmt"
 	// "log"
+	"path/filepath"
+	"mime/multipart"
+	"os"
+	"io"
 )
 
 
@@ -82,6 +86,16 @@ func (r *HttpRequest)Bytes()([]byte, error){
 	return ioutil.ReadAll(resp.Body)
 }
 
+//返回string类型
+func (r *HttpRequest)String()(string, error){
+	b, err := r.Bytes()
+	if err != nil {
+		return "" , err
+	}
+
+	return string(b), nil
+}
+
 //返回json数据解析到结构体
 func(r *HttpRequest)JsonResp(data interface{}) (err error) {
 	b, err := r.Bytes()
@@ -101,5 +115,28 @@ func(r *HttpRequest)XmlResp(data interface{}) (err error) {
 
 	return xml.Unmarshal(b, data)
 }
+
+//上传文件
+func(r *HttpRequest)Upload(filename string)*HttpRequest{
+	bf := &bytes.Buffer{}
+	w := multipart.NewWriter(bf)
+
+	fw, err := w.CreateFormFile("file", filepath.Base(filename))
+	fh, err := os.Open(filename)
+	defer fh.Close()
+	io.Copy(fw, fh)
+
+	contentType := w.FormDataContentType()
+	w.Close()
+	// resp, err := http.Post(url, contentType, bf)
+	// fmt.Println(resp)
+	// if err != nil {
+	// 	fmt.Println("上传错误信息：", err)
+	// 	return nil, err
+	// }
+	
+	return r	
+}
+
 
 

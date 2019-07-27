@@ -96,3 +96,8 @@ func MapToXml(data map[string]string) string {
 	xml += `</xml>`
 	return xml
 }
+
+//保存到
+func SaveTo(path string){
+
+}
