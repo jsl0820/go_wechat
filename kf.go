@@ -7,7 +7,7 @@ import (
 
 
 type KfResp struct {
-	ErrCode   string `json:"errcode"`
+	ErrCode   int `json:"errcode"`
 	ErrMsg    string `json:"errmsg"`
 }
 

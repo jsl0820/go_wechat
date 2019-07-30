@@ -124,7 +124,7 @@ func (m *Media)Download(id, path string) error {
 
 	var resp MediaResp
 	url := HOST + "/cgi-bin/media/get?access_token=" + tk + "&media_id=" + id
-	err := NewRequest().Get(url).SaveTo(path)
+	err = NewRequest().Get(url).SaveTo(path)
 	if err != nil {
 		return err
 	}
@@ -134,16 +134,16 @@ func (m *Media)Download(id, path string) error {
 
 
 //获取视频
-func (m *Media)GetVedio(id string)(string, error){
-	tk, err := token.Get()
-	if err != nil {
-		return "", err
-	}
+// func (m *Media)GetVedio(id string)(string, error){
+// 	tk, err := token.Get()
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	var resp MediaResp
-	url := HOST + "/cgi-bin/media/get?access_token=" + tk + "&media_id=" + id
-	err := NewRequest().Get(url).Resp(&resp)
-}
+// 	var resp MediaResp
+// 	url := HOST + "/cgi-bin/media/get?access_token=" + tk + "&media_id=" + id
+// 	err := NewRequest().Get(url).Resp(&resp)
+// }
 
 //删除
 func (m *Media)Del(id string)(bool, error){
@@ -206,22 +206,22 @@ type Article struct {
 }
 
 //上传图文
-func(a *Article)Upload()(string, error){
-	tk, err := token.Get()
-	if err !=nil {
-		return "", err
-	}
+// func(a *Article)Upload()(string, error){
+// 	tk, err := token.Get()
+// 	if err !=nil {
+// 		return "", err
+// 	}
 
-	var resp &MediaResp
-	body, err := json.Marshal(*a)
-	url := HOST + "/cgi-bin/material/add_news?access_token=" + ACCESS_TOKEN
-	err := NewRequest().Body(body).Post(url).Resp(&)
-	if err != nil {
-		return "", err 
-	}
+// 	var resp &MediaResp
+// 	body, err := json.Marshal(*a)
+// 	url := HOST + "/cgi-bin/material/add_news?access_token=" + ACCESS_TOKEN
+// 	err := NewRequest().Body(body).Post(url).Resp(&)
+// 	if err != nil {
+// 		return "", err 
+// 	}
 
-	return resp.MediaId, nil
-} 
+// 	return resp.MediaId, nil
+// } 
 
 //上传图文消息的图片
 func (a *Article)UploadImg(path string)(string, error){
