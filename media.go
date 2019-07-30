@@ -1,8 +1,8 @@
 package wechat
 
 import (
-	"fmt"
-	"errors"
+	// "fmt"
+	// "errors"
 )
 
 type CountResp struct {
@@ -39,98 +39,98 @@ type Media struct {
 	
 }
 
-//上传图片
-func(m *Media)UploadImg(filename string)(string, error){
-	tk, err := token.Get()
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
+// //上传图片
+// func(m *Media)UploadImg(filename string)(string, error){
+// 	tk, err := token.Get()
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return "", err
+// 	}
 
-	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=image" 
-	var resp UploadResp
-	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
+// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=image" 
+// 	var resp UploadResp
+// 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return "", err
+// 	}
 
-	return resp.MediaId, nil 
-}
+// 	return resp.MediaId, nil 
+// }
 
-//上传声音
-func(m *Media)UploadVoice()(string, error){
-	tk, err := token.Get()
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
+// //上传声音
+// func(m *Media)UploadVoice()(string, error){
+// 	tk, err := token.Get()
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return "", err
+// 	}
 
-	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=voice" 
-	var resp UploadResp
-	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
+// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=voice" 
+// 	var resp UploadResp
+// 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return "", err
+// 	}
 
-	return resp.MediaId, nil 
-}
+// 	return resp.MediaId, nil 
+// }
 
-//上传视频
-func(m *Media)UploadVedio(filename string)(string, error){
-	tk, err := token.Get()
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
+// //上传视频
+// func(m *Media)UploadVedio(filename string)(string, error){
+// 	tk, err := token.Get()
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return "", err
+// 	}
 
-	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=video" 
-	var resp UploadResp
-	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
+// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=video" 
+// 	var resp UploadResp
+// 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return "", err
+// 	}
 
-	return resp.MediaId, nil 
-}
+// 	return resp.MediaId, nil 
+// }
 
-//上传缩略图
-func (m *Media)UploadThumb(filename string)(string, error){
-	tk, err := token.Get()
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
+// //上传缩略图
+// func (m *Media)UploadThumb(filename string)(string, error){
+// 	tk, err := token.Get()
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return "", err
+// 	}
 
-	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=video" 
-	var resp UploadResp
-	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
+// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=video" 
+// 	var resp UploadResp
+// 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return "", err
+// 	}
 
-	return resp.MediaId, nil 
-}
+// 	return resp.MediaId, nil 
+// }
 
-//下载素材
-func (m *Media)Download(id, path string) error {
-	tk, err := token.Get()
-	if err != nil {
-		return err
-	}
+// //下载素材
+// func (m *Media)Download(id, path string) error {
+// 	tk, err := token.Get()
+// 	if err != nil {
+// 		return err
+// 	}
 
-	var resp MediaResp
-	url := HOST + "/cgi-bin/media/get?access_token=" + tk + "&media_id=" + id
-	err = NewRequest().Get(url).SaveTo(path)
-	if err != nil {
-		return err
-	}
+// 	var resp MediaResp
+// 	url := HOST + "/cgi-bin/media/get?access_token=" + tk + "&media_id=" + id
+// 	err = NewRequest().Get(url).SaveTo(path)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 
 //获取视频
@@ -145,28 +145,28 @@ func (m *Media)Download(id, path string) error {
 // 	err := NewRequest().Get(url).Resp(&resp)
 // }
 
-//删除
-func (m *Media)Del(id string)(bool, error){
-	tk, err := token.Get()
-	if err !=nil {
-		return false, err
-	}
+// //删除
+// func (m *Media)Del(id string)(bool, error){
+// 	tk, err := token.Get()
+// 	if err !=nil {
+// 		return false, err
+// 	}
 
-	body := `{media_id:{{.id}} }`
-	url := HOST + "/cgi-bin/material/del_material?access_token=" + tk
-	var resp MediaBaseResp
-	err = NewRequest().Body(body).Post(url).JsonResp(&resp)
-	if err != nil {
-		fmt.Println(err)
-		return false, err
-	}
+// 	body := `{media_id:{{.id}} }`
+// 	url := HOST + "/cgi-bin/material/del_material?access_token=" + tk
+// 	var resp MediaBaseResp
+// 	err = NewRequest().Body(body).Post(url).JsonResp(&resp)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return false, err
+// 	}
 
-	if resp.ErrCode != 0 {
-		return false, errors.New("操作失败：", resp.ErrMsg)
-	}
+// 	if resp.ErrCode != 0 {
+// 		return false, errors.New("操作失败：", resp.ErrMsg)
+// 	}
 
-	return true, nil
-}
+// 	return true, nil
+// }
 
 
 //统计
@@ -223,16 +223,16 @@ type Article struct {
 // 	return resp.MediaId, nil
 // } 
 
-//上传图文消息的图片
-func (a *Article)UploadImg(path string)(string, error){
-	tk, err := token.Get()
-	if err != nil {
-		return "", err
-	}
+// //上传图文消息的图片
+// func (a *Article)UploadImg(path string)(string, error){
+// 	tk, err := token.Get()
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	url := HOST + "/cgi-bin/media/uploadimg?access_token=" + tk
-	NewRequest().Upload(path).Post()
-}
+// 	url := HOST + "/cgi-bin/media/uploadimg?access_token=" + tk
+// 	NewRequest().Upload(path).Post()
+// }
 
 //获取
 func (a *Article)Get(id string){

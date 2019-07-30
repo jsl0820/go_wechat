@@ -1,9 +1,9 @@
 package wechat
 
 import (
-	"fmt"
+	// "fmt"
 	"encoding/json"
-	"strings"
+	// "strings"
 	"errors"
 )
 
@@ -22,11 +22,11 @@ type User struct {
 	Province       string   `json:"province"`
 	Country        string   `json:"country"`
 	HeadImgUrl     string   `json:"headimgurl"`
-	SubscribeTime  string   `json:"subscribe_time"`
+	SubscribeTime  int64    `json:"subscribe_time"`
 	Unionid        string   `json:"unionid"`
 	Remark         string   `json:"remark"`
-	Groupid        []string `json:"groupid"`
-	TagidList      string   `json:"tagid_list"`
+	Groupid        int 		`json:"groupid"`
+	TagidList      []string   `json:"tagid_list"`
 	SubscribeScene string   `json:"subscribe_scene"`
 	QrScenetr      string   `json:"qr_scene_str"`
 }
@@ -67,7 +67,7 @@ func (u *Users)Remark(openid, remark string) bool {
 	body := `{ openid:{{.openid}}, remark:{{.remark}} }`
 	
 	var resp UserResp 
-	err := NewRequest().Body(body).JsonResp(&resp)
+	err := NewRequest().Body(body).Get(url).JsonResp(&resp)
 	if err != nil {
 		return false
 	}	
@@ -80,21 +80,19 @@ func (u *Users)Remark(openid, remark string) bool {
 }
 
 //获取用户信息
-func (u *Users)Query(openid string, lang string) (*User, bool) {
+func (u *Users)Query(openid string, lang string) (User, error) {
 	url := HOST + "/cgi-bin/user/info?access_token="
 	url += u.token + "&openid=" + openid + "&lang=" + lang
 
 	var user User
 	err := NewRequest().Get(url).JsonResp(&user)
 	if err != nil {
-		fmt.Println(err)
-		return nil, false 
+		return user, err
 	}
-
-	return &user, true
+	return user, nil
 }
 
-//批量获取用户信息
+// //批量获取用户信息
 func (u *Users)QueryAll(ids []map[string]string) (*[]User, error) {
 	userQuery := &UserList{
 		List : ids,
@@ -107,7 +105,7 @@ func (u *Users)QueryAll(ids []map[string]string) (*[]User, error) {
 	}
 
 	var userList UserListResp
-	err = NewRequest().Body(b).JsonResp(&userList)
+	err = NewRequest().Body(b).Get(url).JsonResp(&userList)
 	if err != nil {
 		return nil, err
 	}
@@ -122,54 +120,54 @@ func (u *Users)QueryAll(ids []map[string]string) (*[]User, error) {
 
 // }
 
-//拉黑用户
-func (u *Users)Block(openids ...string)(bool, error){
-	t, _ := token.Get() 
-	url := HOST + "/cgi-bin/tags/members/batchblacklist?access_token=" + t
+// //拉黑用户
+// func (u *Users)Block(openids ...string)(bool, error){
+// 	t, _ := token.Get() 
+// 	url := HOST + "/cgi-bin/tags/members/batchblacklist?access_token=" + t
 
-	if len(openids...) > 20 {
-		return false, errors.New("数量多，一次最多能操作20个用户")
-	}
+// 	if len(openids...) > 20 {
+// 		return false, errors.New("数量多，一次最多能操作20个用户")
+// 	}
 
-	users := strings.Join(openids, ",")
-	data := `{"openid_list:[" `+ users +`]}`	
+// 	users := strings.Join(openids, ",")
+// 	data := `{"openid_list:[" `+ users +`]}`	
 
-	var resp UserResp
-	err := NewRequest().Body(data).JsonResp(&resp)
-	if err != nil {
-		return false , err
-	}
+// 	var resp UserResp
+// 	err := NewRequest().Body(data).JsonResp(&resp)
+// 	if err != nil {
+// 		return false , err
+// 	}
 
-	if resp.ErrCode == 0 {
-		return true, nil
-	}
+// 	if resp.ErrCode == 0 {
+// 		return true, nil
+// 	}
 
-	return false, errors.New("操作失败！Error:" + resp.ErrMsg)
-}
+// 	return false, errors.New("操作失败！Error:" + resp.ErrMsg)
+// }
 
-//拉黑用户
-func (u *Users)CancelBlock(openids ...string)(bool, error){
-	t, _ := token.Get() 
-	url := HOST + "/cgi-bin/tags/members/batchunblacklist?access_token=" + t
-	if len(openids...) > 20 {
-		return false, errors.New("数量多，一次最多能操作20个用户")
-	}
+// //拉黑用户
+// func (u *Users)CancelBlock(openids ...string)(bool, error){
+// 	t, _ := token.Get() 
+// 	url := HOST + "/cgi-bin/tags/members/batchunblacklist?access_token=" + t
+// 	if len(openids...) > 20 {
+// 		return false, errors.New("数量多，一次最多能操作20个用户")
+// 	}
 
-	users := strings.Join(openids, ",")
-	data := `{"openid_list:[" `+ users +`]}`	
+// 	users := strings.Join(openids, ",")
+// 	data := `{"openid_list:[" `+ users +`]}`	
 
-	var resp UserResp
-	err := NewRequest().Body(data).JsonResp(&resp)
-	if err != nil {
-		return false , err
-	}
+// 	var resp UserResp
+// 	err := NewRequest().Body(data).JsonResp(&resp)
+// 	if err != nil {
+// 		return false , err
+// 	}
 
-	if resp.ErrCode == 0 {
-		return true, nil
-	}
+// 	if resp.ErrCode == 0 {
+// 		return true, nil
+// 	}
 
-	return false, errors.New("操作失败！Error:" + resp.ErrMsg)
-}
+// 	return false, errors.New("操作失败！Error:" + resp.ErrMsg)
+// }
 
 //获取黑名单
 func(u *Users)GetBlackList(openid string )(BlackListResp, error){

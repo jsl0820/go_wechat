@@ -40,36 +40,36 @@ func(u *Unified)Wx(){
 	u.PayInfo["appid"] = WxAppId
 }
 
-func(u *Unified)PrepayId() string {
-	u.Param["mch_id"] = MchId
-	stringSign := StringSign(u.Param) + "&key=" + PayKey
-	sign := strings.ToUpper(Md5(stringSign))
-	u.Param["sign"] =  sign
+// func(u *Unified)PrepayId() string {
+// 	u.Param["mch_id"] = MchId
+// 	stringSign := StringSign(u.Param) + "&key=" + PayKey
+// 	sign := strings.ToUpper(Md5(stringSign))
+// 	u.Param["sign"] =  sign
 
-	xml := MapToXml(u.Param)
-	url := HOST + "/pay/unifiedorder"
+// 	xml := MapToXml(u.Param)
+// 	url := HOST + "/pay/unifiedorder"
 
-	var resp UnifiedResp
-	err := NewRequest().Get(url).XmlResp(&resp)
-	u.Resp = resp
-	return  resp.PrepayId
-}
+// 	var resp UnifiedResp
+// 	err := NewRequest().Get(url).XmlResp(&resp)
+// 	u.Resp = resp
+// 	return  resp.PrepayId
+// }
 
-func(u *Unified)Get()map[string]string{
+// func(u *Unified)Get()map[string]string{
 
-	u.PayInfo["signType"] = "MD5" 
-	u.PayInfo["appId"] = u.Param["appid"]
-	u.PayInfo["timeStamp"] = StampString()
-	u.PayInfo["nonceStr"] = NonceStringGenerator(32)
-	u.PayInfo["package"] = "prepay_id=" + u.PrepayId()
+// 	u.PayInfo["signType"] = "MD5" 
+// 	u.PayInfo["appId"] = u.Param["appid"]
+// 	u.PayInfo["timeStamp"] = StampString()
+// 	u.PayInfo["nonceStr"] = NonceStringGenerator(32)
+// 	u.PayInfo["package"] = "prepay_id=" + u.PrepayId()
 
-	stringSign := StringSign(u.PayInfo) + "&key=" + PayKey
-	sign := Md5(stringSign)
+// 	stringSign := StringSign(u.PayInfo) + "&key=" + PayKey
+// 	sign := Md5(stringSign)
 
-	u.PayInfo["paySign"] = strings.ToUpper(sign)
+// 	u.PayInfo["paySign"] = strings.ToUpper(sign)
 
-	return u.PayInfo
-}
+// 	return u.PayInfo
+// }
 
 //订单查询
 type QueryResp struct {

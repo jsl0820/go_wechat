@@ -10,10 +10,10 @@ import (
 	"net/url"
 	"fmt"
 	// "log"
-	"path/filepath"
-	"mime/multipart"
-	"os"
-	"io"
+	// "path/filepath"
+	// "mime/multipart"
+	// "os"
+	// "io"
 )
 
 
@@ -104,20 +104,20 @@ func (r *HttpRequest)String()(string, error){
 }
 
 //保存到
-func (r *HttpRequest)SaveTo(path string)error{
-	f, err := os.Create(path)
-	if err != nil{
-		return err
-	} 
-	defer f.Close()	
-	b, err := r.Bytes()
-	if err != nil {
-		return err
-	}
+// func (r *HttpRequest)SaveTo(path string)error{
+// 	f, err := os.Create(path)
+// 	if err != nil{
+// 		return err
+// 	} 
+// 	defer f.Close()	
+// 	b, err := r.Bytes()
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err := io.Copy(f, b)
-	return err 
-}
+// 	_, err = io.Copy(f, b)
+// 	return err 
+// }
 
 
 //返回json数据解析到结构体
@@ -141,17 +141,17 @@ func(r *HttpRequest)XmlResp(data interface{}) (err error) {
 }
 
 //上传文件
-func(r *HttpRequest)Upload(filename string)*HttpRequest{
-	bf := &bytes.Buffer{}
-	w := multipart.NewWriter(bf)
-	defer w.Close()
-	fw, err := w.CreateFormFile("file", filepath.Base(filename))
-	fh, err := os.Open(filename)
-	defer fh.Close()
-	io.Copy(fw, fh)
-	r.request.Header("Content-Type", w.FormDataContentType())
-	return r	
-}
+// func(r *HttpRequest)Upload(filename string)*HttpRequest{
+// 	bf := &bytes.Buffer{}
+// 	w := multipart.NewWriter(bf)
+// 	defer w.Close()
+// 	fw, err := w.CreateFormFile("file", filepath.Base(filename))
+// 	fh, err := os.Open(filename)
+// 	defer fh.Close()
+// 	io.Copy(fw, fh)
+// 	r.request.Header("Content-Type", w.FormDataContentType())
+// 	return r	
+// }
 
 
 

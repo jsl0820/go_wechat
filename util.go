@@ -42,26 +42,26 @@ func NonceStringGenerator(length int) string {
 }
 
 
-//转字符串
-func ToString(value interface{}) string {
-   switch value.(type){
-   case string:
-    	return value.(string)   
-   case int32:
-		v := value.(int)
-    	return strconv.Itoa(v)	
-   case int64:
-		v := value.(int64)
-   		return strconv.FormatInt(v,10)
-   case float32:
-		v := value.(float32)
-   		return strconv.FormatFloat(v, 'f', -1, 32)
-   case float64:	
-		v := value.(float64)
-   		return strconv.FormatFloat(v, 'f', -1, 64)		 		   
-   }
-   return ""
-}
+// //转字符串
+// func ToString(value interface{}) string {
+//    switch value.(type){
+//    case string:
+//     	return value.(string)   
+//    case int32:
+// 		v := value.(int)
+//     	return strconv.Itoa(v)	
+//    case int64:
+// 		v := value.(int64)
+//    		return strconv.FormatInt(v,10)
+//    case float32:
+// 		v := value.(float32)
+//    		return strconv.FormatFloat(v, 'f', -1, 32)
+//    case float64:	
+// 		v := value.(float64)
+//    		return strconv.FormatFloat(v, 'f', -1, 64)		 		   
+//    }
+//    return ""
+// }
 
 
 //签名

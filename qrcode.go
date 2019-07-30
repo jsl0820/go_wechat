@@ -28,13 +28,13 @@ type Qrcode struct {
 // 2.字符串形式的二维码参数
 // {"action_name": "QR_LIMIT_STR_SCENE", "action_info": {"scene": {"scene_str": "test"}}}
 
-func QrCode(jsonString string) *Qrcode {
-	t, err := token.Get()
-	return &Qrcode{
-		token: t,
-		JsonString:jsonString,
-	}
-}
+// func QrCode(jsonString string) *Qrcode {
+// 	t, err := token.Get()
+// 	return &Qrcode{
+// 		token: t,
+// 		JsonString:jsonString,
+// 	}
+// }
 
 func (q *Qrcode)Get() (*QrcResp, error) {
 	var resp QrcResp

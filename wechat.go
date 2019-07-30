@@ -9,8 +9,10 @@ var PayKey string
 const  HOST = "https://api.weixin.qq.com"
 
 func init() {
-	WxAppId = "wx75d0a800a00671a1"
-	WxAppSecret = "de3426ea07a05887a220c91232fcc9e7"
+	WxAppId = "wx582ef3694f7a7546"
+	WxAppSecret = "148ee9063222674ef03e4c21776e02cd"
+
+	
 	MpAppid = "wxd598f39ca93bd3d3"
 	MpAppsecret = "4cc8ce9de598c2fcfd3dce9d809cb585"
 	MchId = ""  //商户号

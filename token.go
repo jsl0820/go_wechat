@@ -6,7 +6,7 @@ import (
 	"errors"
 )
 
-const (
+var (
 	TOKEN_ERROR_1 = "系统繁忙，此时请开发者稍候再试"
 	TOKEN_ERROR_2 = "AppSecret错误或者AppSecret不属于这个公众号，请开发者确认AppSecret的正确性"
 	TOKEN_ERROR_3 = "请确保grant_type字段值为client_credential"
