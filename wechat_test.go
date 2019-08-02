@@ -1,7 +1,7 @@
 package wechat
 
 import (
-	"fmt"
+	"log"
 	"testing"
 )	
 
@@ -14,7 +14,7 @@ var openid = "oKPxfwK493kkbIH1dBrIP-nBADBc"
 // file token.go 
 func TestToken(t *testing.T){
 	tk, _ := token.Get()
-	fmt.Println("token", tk)
+	log.Println("token", tk)
 }
 
 func TestReflash(t *testing.T){
@@ -27,7 +27,7 @@ func TestReflash(t *testing.T){
 //获取微信服务器列表
 func TestIpList(t *testing.T){
 	ips, err := IpList()
-	fmt.Println(ips, err)
+	log.Println(ips, err)
 }
 
 // file Kf
@@ -35,17 +35,36 @@ func TestIpList(t *testing.T){
 func TestKfAdd(t *testing.T){
 	kf := &KfAct{}
 	b, err := kf.Add("test3@test.com", "客服222")
-	fmt.Println(b, err)
+	log.Println(b, err)
 }
 
 //
 func TestUserQuery(t *testing.T){
 	user := NewUsers()
 	u, err :=user.Query(openid, "zh_CN")
-	fmt.Println(*u, err)
+	log.Println(u, err)
 }
 
 
 func TestUserQueryAll(t *testing.T){
+	
+}
+
+//表单上传文件测试
+func TestFormFile(t *testing.T){
+	req := NewRequest()
+	req.FormFile("test", "token.go")
+	req.Param("username", "javelin")
+	resp, err  := req.Form().Post("http://httpbin.org/post").String()
+
+	if err != nil {
+		log.Println("111")
+	}
+
+	log.Println(resp)
+}
+
+//
+func TestSaveTo(t *testing.T){
 	
 }

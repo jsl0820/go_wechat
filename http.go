@@ -10,20 +10,32 @@ import (
 	"net/url"
 	"fmt"
 	// "log"
-	// "path/filepath"
-	// "mime/multipart"
-	// "os"
-	// "io"
+	"path/filepath"
+	"mime/multipart"
+	"os"
+	"io"
+	"log"
 )
 
 
 func NewRequest() *HttpRequest {
-	return &HttpRequest{}
+
+	files := make(map[string]string)
+	formData := make(map[string]string)
+	request := http.Request {
+		Header:make(http.Header),
+	}
+
+	return &HttpRequest{
+		files : files,
+		formData : formData,
+		request:request,
+	}
 }
 
 type HttpRequest struct {
 	files map[string]string
-	form map[string]string
+	formData map[string]string
 	request http.Request
 	response http.Response
 }
@@ -43,10 +55,6 @@ func (r *HttpRequest)Body(data interface{}) *HttpRequest {
 	return r
 }
 
-//构建formData
-func (r *HttpRequest)FormData()*HttpRequest{
-	return r
-}
 
 //设置header
 func (r *HttpRequest)Header(key , value string)*HttpRequest{
@@ -140,18 +148,47 @@ func(r *HttpRequest)XmlResp(data interface{}) (err error) {
 	return xml.Unmarshal(b, data)
 }
 
-//上传文件
-// func(r *HttpRequest)Upload(filename string)*HttpRequest{
-// 	bf := &bytes.Buffer{}
-// 	w := multipart.NewWriter(bf)
-// 	defer w.Close()
-// 	fw, err := w.CreateFormFile("file", filepath.Base(filename))
-// 	fh, err := os.Open(filename)
-// 	defer fh.Close()
-// 	io.Copy(fw, fh)
-// 	r.request.Header("Content-Type", w.FormDataContentType())
-// 	return r	
-// }
 
+//表单上传文件
+func(r *HttpRequest)FormFile(field, filename string) *HttpRequest{
+	r.files[field] = filename
+	return r
+}
 
+//表单参数设置
+func(r *HttpRequest)Param(k, v string) *HttpRequest{
+	r.formData[k] = v
+	return r
+}
 
+//构建表单
+//这里是有文件的POST表单
+func(r *HttpRequest)Form() *HttpRequest{
+	//读取文件
+	if len(r.files) > 0 {
+		bf := &bytes.Buffer{}
+		w := multipart.NewWriter(bf)
+		defer w.Close()
+		for field, fileName := range r.files {
+			fw, err := w.CreateFormFile(field, filepath.Base(fileName))
+			if err != nil {
+				log.Println(err)
+			}
+			
+			fh, err := os.Open(fileName)
+			if err != nil {
+				log.Println(err)
+			}
+			
+			defer fh.Close()
+			io.Copy(fw, fh)
+		}
+		r.Header("Content-Type", w.FormDataContentType())
+		for k, v := range r.formData {
+			w.WriteField(k, v)
+		}
+
+		r.request.Body =  ioutil.NopCloser(bf)
+	} 
+	return r
+}
