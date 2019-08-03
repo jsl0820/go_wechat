@@ -3,6 +3,9 @@ package wechat
 import (
 	"log"
 	"testing"
+	// "os"
+	"strings"
+	"io/ioutil"
 )	
 
 var openid = "oKPxfwK493kkbIH1dBrIP-nBADBc"
@@ -66,5 +69,16 @@ func TestFormFile(t *testing.T){
 
 //
 func TestSaveTo(t *testing.T){
-	
+	f := "beego_testfile"
+	req := NewRequest().Get("http://httpbin.org/ip")
+	err := req.SaveTo(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.Remove(f)
+	b, err := ioutil.ReadFile(f)
+	if n := strings.Index(string(b), "origin"); n == -1 {
+		t.Fatal(err)
+	}
 }

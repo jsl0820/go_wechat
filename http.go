@@ -111,22 +111,22 @@ func (r *HttpRequest)String()(string, error){
 	return string(b), nil
 }
 
-//保存到
-// func (r *HttpRequest)SaveTo(path string)error{
-// 	f, err := os.Create(path)
-// 	if err != nil{
-// 		return err
-// 	} 
-// 	defer f.Close()	
-// 	b, err := r.Bytes()
-// 	if err != nil {
-// 		return err
-// 	}
+// 保存到
+func (r *HttpRequest)SaveTo(path string)error{
+	f, err := os.Create(path)
+	if err != nil{
+		return err
+	} 
 
-// 	_, err = io.Copy(f, b)
-// 	return err 
-// }
+	defer f.Close()	
+	b, err := r.Bytes()
+	if err != nil {
+		return err
+	}
 
+	_, err = f.Write(b)
+	return err 
+}
 
 //返回json数据解析到结构体
 func(r *HttpRequest)JsonResp(data interface{}) (err error) {
