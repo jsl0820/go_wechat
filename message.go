@@ -41,11 +41,6 @@ func (t *TempMsg) Wx(cfg TempMsgCfg, token string) {
 	t.url = HOST + "/cgi-bin/message/template/send?access_token=ACCESS_TOKEN"
 }
 
-//小程序消息
-func (t *TempMsg) Mp(cfg TempMsgCfg, token string)  {
-	t.plate = 1
-	t.url = HOST + "/cgi-bin/message/wxopen/template/send?access_token=ACCESS_TOKEN"
-}
 
 // //设置所在行业
 // func(t *TempMsg) SetIndustry(idst1, idst2 string)(bool, error){

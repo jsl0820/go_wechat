@@ -31,7 +31,7 @@ var token = &Token{Expires: 7200}
 func (t *Token) Refresh() error {
 
 	url := HOST + "/cgi-bin/token?"
-	url += "grant_type=client_credential&appid=" + WxAppId + "&secret=" + WxAppSecret
+	url += "grant_type=client_credential&appid=" + Wxconfig.WxAppId + "&secret=" + Wxconfig.WxAppSecret
 	err := NewRequest().Get(url).JsonResp(&t.At)
 	if err != nil {
 		return err

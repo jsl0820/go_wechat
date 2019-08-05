@@ -3,7 +3,7 @@ package wechat
 import (
 	"log"
 	"testing"
-	// "os"
+	"os"
 	"strings"
 	"io/ioutil"
 )	
@@ -48,7 +48,6 @@ func TestUserQuery(t *testing.T){
 	log.Println(u, err)
 }
 
-
 func TestUserQueryAll(t *testing.T){
 	
 }
@@ -82,3 +81,4 @@ func TestSaveTo(t *testing.T){
 		t.Fatal(err)
 	}
 }
+

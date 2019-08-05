@@ -87,7 +87,7 @@ func (k *KfAct)Set(account, nickname string) (bool,error){
 	}
 
 	if resp.ErrCode != 0 {
-		return false, errors.New("请求失败错误码：" + resp.ErrCode)
+		return false, errors.New("请求失败：" + resp.ErrMsg)
 	}
 
 	return true, nil 	
@@ -147,7 +147,17 @@ func (k *KfAct)UploadHeadimg(kfAccount, path string)error{
 	url := HOST + "/customservice/kfaccount/uploadheadimg?access_token=" + t + "&kf_account=" + kfAccount
 
 	req := NewRequest().Post(url)
-	req.FormFile(path)
+	req.FormFile("filename", path)
+	var resp KfResp
+	err = req.JsonResp(&resp)
+	if err != nil {
+		return err 
+	}
 
+	if resp.ErrCode != 0 {
+		return errors.New("操作失败：" + resp.ErrMsg)
+	}
+
+	return nil
 }
 

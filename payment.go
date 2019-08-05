@@ -31,13 +31,13 @@ type Unified struct {
 }
 
 func(u *Unified)Mp(){
-	u.Param["appid"] = MpAppid
-	u.PayInfo["appid"] = MpAppid
+	u.Param["appid"] = Wxconfig.MpAppid
+	u.PayInfo["appid"] = Wxconfig.MpAppid
 }
 
 func(u *Unified)Wx(){
-	u.Param["appid"] = WxAppId
-	u.PayInfo["appid"] = WxAppId
+	u.Param["appid"] = Wxconfig.WxAppId
+	u.PayInfo["appid"] = Wxconfig.WxAppId
 }
 
 // func(u *Unified)PrepayId() string {
@@ -112,12 +112,12 @@ type Query struct {
 func (q *Query)config(plat string) error {
 
 	if plat == "mp"{
-		q.Param["appid"] = MpAppid
+		q.Param["appid"] = Wxconfig.MpAppid
 		return nil 
 	}
 
 	if plat == "wx" {
-		q.Param["appid"]  = WxAppId
+		q.Param["appid"]  = Wxconfig.WxAppId
 		return nil 
 	}
 
@@ -127,7 +127,7 @@ func (q *Query)config(plat string) error {
 func (q *Query)Get(codeType , code string)(*QueryResp, error){
 	q.Param["appid"] = q.appid
 	q.Param[codeType] = code
-	q.Param["mch_id"] = MchId
+	q.Param["mch_id"] = Wxconfig.MchId
 	q.Param["nonce_str"] = NonceStringGenerator(32)
 	q.Param["sign"] = PaySign(q.Param)
 
@@ -317,7 +317,7 @@ func(p *Pay)Unified(param map[string]string)*Unified{
 //订单查询
 func (p *Pay)Query(codeType, code string) *Query {
 	param := make(map[string]string)
-	param["mch_id"] = MchId
+	param["mch_id"] = Wxconfig.MchId
 	param["nonce_str"] = NonceStringGenerator(32)
 	param[codeType] = code
 	return &Query{Param : param }
@@ -326,7 +326,7 @@ func (p *Pay)Query(codeType, code string) *Query {
 //关闭订单
 func (p *Pay)Close(codeType, code string)CloseResp{
 	param := make(map[string]string)
-	param["mch_id"] = MchId
+	param["mch_id"] = Wxconfig.MchId
 	param["nonce_str"] = NonceStringGenerator(32)
 	param[codeType] = code
 	param["sign"] = PaySign(param) 
@@ -351,7 +351,7 @@ func (p *Pay)Refund(codeType, code string) RefundResp {
 	param := make(map[string]string)
 
 	param["appid"] = p.appid
-	param["mch_id"] = MchId
+	param["mch_id"] = Wxconfig.MchId
 	param["nonce_str"] = NonceStringGenerator(32)
 	param[codeType] = code
 
@@ -372,7 +372,7 @@ func (p *Pay)Refund(codeType, code string) RefundResp {
 func(p *Pay)Bill() *Bill{
 	param := make(map[string]string)
 	param["appid"] = p.appid
-	param["mch_id"] = MchId
+	param["mch_id"] = Wxconfig.MchId
 	param["nonce_str"] = NonceStringGenerator(32)
 
 	return &Bill{Param:param }
@@ -380,7 +380,7 @@ func(p *Pay)Bill() *Bill{
 
 //支付签名
 func PaySign(param map[string]string) string{
-	stringSign := StringSign(param) + "&key=" + PayKey
+	stringSign := StringSign(param) + "&key=" + Wxconfig.PayKey
 	sign := Md5(stringSign)
 	return strings.ToUpper(sign)
 }
@@ -390,11 +390,11 @@ func NewPay(plat string) *Pay {
 
 	var appid string
 	if plat == "wx"{
-		appid = WxAppId 
+		appid = Wxconfig.WxAppId 
 	}
 
 	if plat == "mp"{
-		appid = MpAppid
+		appid = Wxconfig.MpAppid
 	}
 
 	return &Pay{appid:appid}
