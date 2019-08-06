@@ -3,6 +3,7 @@ package wechat
 import (
 	// "fmt"
 	"errors"
+	"log"
 )
 
 
@@ -36,7 +37,7 @@ func (k *KfAct)Add(account, nickname string ) (bool,error){
 	}
 
 	url := HOST + "/customservice/kfaccount/add?access_token=" + t
-	body := `{kf_account:{{.account}}, nickname:{{.nickname}}}`
+	body := `{"kf_account":` + account + `"nickname":` + nickname +`}`
 
 	var resp KfResp
 	err = NewRequest().Body(body).Get(url).JsonResp(&resp)
@@ -45,6 +46,7 @@ func (k *KfAct)Add(account, nickname string ) (bool,error){
 	}
 
 	if resp.ErrCode != 0 {
+		log.Println(resp)
 		return false, errors.New("请求失败错误码：" + resp.ErrMsg)
 	}
 

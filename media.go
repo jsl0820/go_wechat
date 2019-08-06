@@ -1,8 +1,8 @@
 package wechat
 
 import (
-	// "fmt"
-	// "errors"
+	"log"
+	"errors"
 )
 
 type CountResp struct {
@@ -39,30 +39,46 @@ type Media struct {
 	
 }
 
-// //上传图片
-// func(m *Media)UploadImg(filename string)(string, error){
-// 	tk, err := token.Get()
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return "", err
-// 	}
+//上传临时素材
+func (m *Media)Upload(fileType , filename string)(UploadResp, error){
+	var resp UploadResp
+	tk, err := token.Get()
+	if err != nil {
+		log.Println(err)
+		return resp, err
+	}
 
-// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=image" 
-// 	var resp UploadResp
-// 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return "", err
-// 	}
+	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=" + fileType 
+	req := NewRequest().Post(url)
+	req.FormFile("media", filename)
+	err = req.Form().JsonResp(&resp)
+	if err != nil {
+		return resp, err
+	}
 
-// 	return resp.MediaId, nil 
-// }
+	if resp.ErrMsg != ""{
+		return resp, errors.New("请求出错" + resp.ErrMsg)
+	}
 
-// //上传声音
+	return resp, nil
+}
+
+
+//上传图片
+func(m *Media)UploadImg(filename string)(string, error){
+	resp, err := m.Upload("image", filename) 
+	if err != nil {
+		return "", err 
+	}
+
+	return resp.MediaId, nil 
+}
+
+//上传声音
 // func(m *Media)UploadVoice()(string, error){
 // 	tk, err := token.Get()
 // 	if err != nil {
-// 		fmt.Println(err)
+// 		log.Println(err)
 // 		return "", err
 // 	}
 
@@ -77,7 +93,7 @@ type Media struct {
 // 	return resp.MediaId, nil 
 // }
 
-// //上传视频
+//上传视频
 // func(m *Media)UploadVedio(filename string)(string, error){
 // 	tk, err := token.Get()
 // 	if err != nil {
@@ -89,18 +105,18 @@ type Media struct {
 // 	var resp UploadResp
 // 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
 // 	if err != nil {
-// 		fmt.Println(err)
+// 		log.Println(err)
 // 		return "", err
 // 	}
 
 // 	return resp.MediaId, nil 
 // }
 
-// //上传缩略图
+//上传缩略图
 // func (m *Media)UploadThumb(filename string)(string, error){
 // 	tk, err := token.Get()
 // 	if err != nil {
-// 		fmt.Println(err)
+// 		log.Println(err)
 // 		return "", err
 // 	}
 
@@ -108,7 +124,7 @@ type Media struct {
 // 	var resp UploadResp
 // 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
 // 	if err != nil {
-// 		fmt.Println(err)
+// 		log.Println(err)
 // 		return "", err
 // 	}
 

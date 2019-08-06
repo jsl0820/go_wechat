@@ -9,13 +9,20 @@ import (
 )	
 
 var openid = "oKPxfwK493kkbIH1dBrIP-nBADBc"
+//go test -v wechat_test.go  ip_list.go wechat.go http.go  token.go -run TestIp
 
-
-//测试单个方法 go test -v -test.run 方法名称
-
+func TestConfig(t *testing.T){
+	config := Config{
+		WxAppId:"wx582ef3694f7a7546",
+		WxAppSecret:"148ee9063222674ef03e4c21776e02cd",
+	}
+	WxConfig(config)
+	log.Println(Wxconfig)
+}
 
 // file token.go 
 func TestToken(t *testing.T){
+	TestConfig(t)
 	tk, _ := token.Get()
 	log.Println("token", tk)
 }
@@ -25,31 +32,44 @@ func TestReflash(t *testing.T){
 	token.Refresh()
 }
 
-
 // file ip_list
 //获取微信服务器列表
 func TestIpList(t *testing.T){
+	TestToken(t)
 	ips, err := IpList()
 	log.Println(ips, err)
 }
 
-// file Kf
+// func TestKfAdd(t *testing.T){
+// 	TestToken(t)
+// 	kf := &KfAct{}
+// 	b, err := kf.Add("user1@gh_2cd837cec3e9", "javelin")
+// 	log.Println(b, err)
+// }
 
-func TestKfAdd(t *testing.T){
-	kf := &KfAct{}
-	b, err := kf.Add("test3@test.com", "客服222")
-	log.Println(b, err)
-}
+// func TestKfGet(t *testing.T){
+// 	TestToken(t)
+// 	kf := &KfAct{}
+// 	list, err := kf.Get()
+// 	log.Println(list, err)
+// }
 
 //
-func TestUserQuery(t *testing.T){
-	user := NewUsers()
-	u, err :=user.Query(openid, "zh_CN")
-	log.Println(u, err)
-}
+// func TestUserQuery(t *testing.T){
+// 	user := NewUsers()
+// 	u, err :=user.Query(openid, "zh_CN")
+// 	log.Println(u, err)
+// }
 
-func TestUserQueryAll(t *testing.T){
-	
+func TestUploadImage(t *testing.T){
+	TestToken(t)
+	m := &Media{}
+	id, err := m.UploadImg("test.jpg")
+	if err != nil {
+		log.Println(err)
+	}
+
+	log.Println(id)
 }
 
 //表单上传文件测试
@@ -66,7 +86,6 @@ func TestFormFile(t *testing.T){
 	log.Println(resp)
 }
 
-//
 func TestSaveTo(t *testing.T){
 	f := "beego_testfile"
 	req := NewRequest().Get("http://httpbin.org/ip")

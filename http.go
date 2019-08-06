@@ -15,6 +15,7 @@ import (
 	"os"
 	"io"
 	"log"
+	"strconv"
 )
 
 
@@ -183,7 +184,9 @@ func(r *HttpRequest)Form() *HttpRequest{
 			defer fh.Close()
 			io.Copy(fw, fh)
 		}
+		Length :=  strconv.Itoa(bytes.Count(fh))
 		r.Header("Content-Type", w.FormDataContentType())
+		r.Header("Content-Length", Length)
 		for k, v := range r.formData {
 			w.WriteField(k, v)
 		}
