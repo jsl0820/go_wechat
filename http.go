@@ -9,13 +9,12 @@ import (
 	// "errors"
 	"net/url"
 	"fmt"
-	// "log"
-	"path/filepath"
+	"log"
+	// "path/filepath"
 	"mime/multipart"
 	"os"
 	"io"
-	"log"
-	"strconv"
+	// "strconv"
 )
 
 
@@ -66,7 +65,7 @@ func (r *HttpRequest)Header(key , value string)*HttpRequest{
 func (r *HttpRequest) Get(urlString string) *HttpRequest {
 	u, err := url.Parse(urlString)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	r.request.URL = u
@@ -88,15 +87,27 @@ func (r *HttpRequest) Post(urlString string)  *HttpRequest {
 //发起请求
 func (r *HttpRequest) do() (*http.Response, error) {
 	clinet := &http.Client{}
+	log.Println("请求头", r.request.Header)
+	log.Println("请求链接", r.request.URL)
+
 	return clinet.Do(&r.request)
 }
 
 //返回Bytes类型
 func (r *HttpRequest)Bytes()([]byte, error){
 	resp, err := r.do()
+
+	log.Println(resp.StatusCode)
+	// log.Println(resp.Body)
+	log.Println(err)
+
 	if err != nil {
-		return nil, err
+		log.Println("请求出错!")
+		panic(err)
 	}
+
+	// log.Println("请求", r.request)
+	// log.Println("响应", resp.Header)
 
 	defer resp.Body.Close()
 	return ioutil.ReadAll(resp.Body)
@@ -132,8 +143,9 @@ func (r *HttpRequest)SaveTo(path string)error{
 //返回json数据解析到结构体
 func(r *HttpRequest)JsonResp(data interface{}) (err error) {
 	b, err := r.Bytes()
+
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return json.Unmarshal(b, data)
@@ -171,22 +183,23 @@ func(r *HttpRequest)Form() *HttpRequest{
 		w := multipart.NewWriter(bf)
 		defer w.Close()
 		for field, fileName := range r.files {
-			fw, err := w.CreateFormFile(field, filepath.Base(fileName))
+			fw, err := w.CreateFormFile(field, fileName)
+			// fw, err := w.CreateFormFile(field, filepath.Base(fileName))
 			if err != nil {
 				log.Println(err)
 			}
 			
 			fh, err := os.Open(fileName)
 			if err != nil {
-				log.Println(err)
+				panic(err)
 			}
 			
 			defer fh.Close()
 			io.Copy(fw, fh)
 		}
-		Length :=  strconv.Itoa(bytes.Count(fh))
+		// length :=  strconv.Itoa(bf.Len())
 		r.Header("Content-Type", w.FormDataContentType())
-		r.Header("Content-Length", Length)
+		// r.Header("Content-Length", length)
 		for k, v := range r.formData {
 			w.WriteField(k, v)
 		}
@@ -195,3 +208,50 @@ func(r *HttpRequest)Form() *HttpRequest{
 	} 
 	return r
 }
+
+
+//构建表单
+//这里是有文件的POST表单
+func(r *HttpRequest)PostFile(url, field, filename string) {
+
+	bf := &bytes.Buffer{}
+	w := multipart.NewWriter(bf)
+	defer w.Close()
+
+	log.Println(field)
+
+	fw, err := w.CreateFormFile(field, filename)
+	if err != nil {
+		log.Println(err)
+	}
+	
+	fh, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	
+	defer fh.Close()
+
+	io.Copy(fw, fh)
+	contentType :=  w.FormDataContentType()
+
+	// r.Header("Content-Length", length)
+	// for k, v := range r.formData {
+	// 	w.WriteField(k, v)
+	// }
+
+	resp, err := http.Post(url, contentType, bf)
+	// r.request.Body =  ioutil.NopCloser(bf)
+	
+	// log.Println("响应1",resp)	
+
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Println(err)
+	}
+
+	respBody, _ := ioutil.ReadAll(resp.Body)
+	log.Println("响应", string(respBody))
+}
+
+

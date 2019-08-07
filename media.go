@@ -51,7 +51,11 @@ func (m *Media)Upload(fileType , filename string)(UploadResp, error){
 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=" + fileType 
 	req := NewRequest().Post(url)
 	req.FormFile("media", filename)
-	err = req.Form().JsonResp(&resp)
+
+	re, err := req.Form().String()
+
+	log.Println("返回", re)
+	
 	if err != nil {
 		return resp, err
 	}
@@ -67,6 +71,7 @@ func (m *Media)Upload(fileType , filename string)(UploadResp, error){
 //上传图片
 func(m *Media)UploadImg(filename string)(string, error){
 	resp, err := m.Upload("image", filename) 
+
 	if err != nil {
 		return "", err 
 	}

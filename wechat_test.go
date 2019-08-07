@@ -13,8 +13,8 @@ var openid = "oKPxfwK493kkbIH1dBrIP-nBADBc"
 
 func TestConfig(t *testing.T){
 	config := Config{
-		WxAppId:"wx582ef3694f7a7546",
-		WxAppSecret:"148ee9063222674ef03e4c21776e02cd",
+		WxAppId:"wx75d0a800a00671a1",
+		WxAppSecret:"de3426ea07a05887a220c91232fcc9e7",
 	}
 	WxConfig(config)
 	log.Println(Wxconfig)
@@ -62,14 +62,20 @@ func TestIpList(t *testing.T){
 // }
 
 func TestUploadImage(t *testing.T){
-	TestToken(t)
+	config := Config{
+		WxAppId:"wx582ef3694f7a7546",
+		WxAppSecret:"148ee9063222674ef03e4c21776e02cd",
+	}
+	WxConfig(config)
+
 	m := &Media{}
 	id, err := m.UploadImg("test.jpg")
 	if err != nil {
-		log.Println(err)
+		log.Println("err", err)
 	}
 
 	log.Println(id)
+
 }
 
 //表单上传文件测试
@@ -101,3 +107,15 @@ func TestSaveTo(t *testing.T){
 	}
 }
 
+
+func TestFileUpLoad(t *testing.T){
+	config := Config{
+		WxAppId:"wx582ef3694f7a7546",
+		WxAppSecret:"148ee9063222674ef03e4c21776e02cd",
+	}
+	WxConfig(config)
+	tk, _ := token.Get()
+	
+	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=image"
+	NewRequest().PostFile(url, "media", "test.jpg")
+}
