@@ -4,114 +4,109 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"bytes"
+	"io"
 	"io/ioutil"
 	"net/http"
-	// "errors"
-	"net/url"
+	"errors"
+	// "net/url"
 	"fmt"
 	"log"
 	// "path/filepath"
 	"mime/multipart"
 	"os"
-	"io"
 	// "strconv"
 )
 
 
 func NewRequest() *HttpRequest {
 
-	files := make(map[string]string)
+	file := make(map[string]string)
 	formData := make(map[string]string)
-	request := http.Request {
-		Header:make(http.Header),
-	}
-
+	
 	return &HttpRequest{
-		files : files,
+		file : file,
 		formData : formData,
-		request:request,
 	}
 }
 
 type HttpRequest struct {
-	files map[string]string
+	err error
+	body io.Reader
+	contentType string
+	resp *http.Response
+	file map[string]string
 	formData map[string]string
-	request http.Request
-	response http.Response
 }
 
-//请求体
-func (r *HttpRequest)Body(data interface{}) *HttpRequest {
+//
+func(req *HttpRequest)ContentType(contentType string) *HttpRequest {
+	req.contentType = contentType
+	return req
+}
+
+// //请求体
+// func (req *HttpRequest)Body(data interface{}) *HttpRequest {
+	
+// 	switch contentType {
+// 	case "json":
+// 		req.contentType = "" 
+// 		req.determine(data)
+// 	case "xml":	
+// 		req.contentType = ""
+// 		req.determine(data)
+// 	default :	
+// 		req.err = errors.New("contentType 参数出错")
+// 	}
+
+// 	return req
+// }
+
+//断言
+func (req *HttpRequest)Body(data interface{}) *HttpRequest{
 	switch t := data.(type){
 	case string :
 		bf := bytes.NewBufferString(t)
-		r.request.Body = ioutil.NopCloser(bf)
-		r.request.ContentLength = int64(len(t))
+		req.body = ioutil.NopCloser(bf)
 	case []byte:
 		bf := bytes.NewBuffer(t)
-		r.request.Body = ioutil.NopCloser(bf)
-		r.request.ContentLength = int64(len(t))	
+		req.body = ioutil.NopCloser(bf)
+	default :
+		req.err = errors.New("参数不支持该类型!")	
 	}
-	return r
+
+	return req
 }
 
-
-//设置header
-func (r *HttpRequest)Header(key , value string)*HttpRequest{
-	r.request.Header.Set(key, value)
-	return r
-}
-
-func (r *HttpRequest) Get(urlString string) *HttpRequest {
-	u, err := url.Parse(urlString)
+func (req *HttpRequest)Get(uri string) *HttpRequest {
+	resp , err := http.Get(uri)
 	if err != nil {
-		log.Println(err)
+		req.err = err 	
 	}
 
-	r.request.URL = u
-	r.request.Method = "GET"
-	return r
+	req.resp = resp
+	return req
 }
 
-func (r *HttpRequest) Post(urlString string)  *HttpRequest {
-	u, err := url.Parse(urlString)
+func (req *HttpRequest)Post(uri string)  *HttpRequest {
+	resp, err := http.Post(uri, req.contentType, req.body)
 	if err != nil {
-		fmt.Println(err)
+		req.resp = resp
 	}
 
-	r.request.URL = u
-	r.request.Method = "POST"
-	return r
-}
-
-//发起请求
-func (r *HttpRequest) do() (*http.Response, error) {
-	clinet := &http.Client{}
-	log.Println("请求头", r.request.Header)
-	log.Println("请求链接", r.request.URL)
-
-	return clinet.Do(&r.request)
+	return req
 }
 
 //返回Bytes类型
-func (r *HttpRequest)Bytes()([]byte, error){
-	resp, err := r.do()
-
-	log.Println(resp.StatusCode)
-	// log.Println(resp.Body)
-	log.Println(err)
-
+func (req *HttpRequest)Bytes()([]byte, error){
+	body := req.resp.Body
+	respByte, err := ioutil.ReadAll(body)
 	if err != nil {
-		log.Println("请求出错!")
-		panic(err)
+		req.err = err 
 	}
-
-	// log.Println("请求", r.request)
-	// log.Println("响应", resp.Header)
-
-	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
-}
+	
+	defer body.Close()
+	return respByte, req.err
+}	
 
 //返回string类型
 func (r *HttpRequest)String()(string, error){
@@ -164,62 +159,20 @@ func(r *HttpRequest)XmlResp(data interface{}) (err error) {
 
 //表单上传文件
 func(r *HttpRequest)FormFile(field, filename string) *HttpRequest{
-	r.files[field] = filename
+	r.file[field] = filename
 	return r
 }
 
 //表单参数设置
-func(r *HttpRequest)Param(k, v string) *HttpRequest{
+func(r *HttpRequest)FormField(k, v string) *HttpRequest{
 	r.formData[k] = v
 	return r
 }
 
-//构建表单
-//这里是有文件的POST表单
-func(r *HttpRequest)Form() *HttpRequest{
-	//读取文件
-	if len(r.files) > 0 {
-		bf := &bytes.Buffer{}
-		w := multipart.NewWriter(bf)
-		defer w.Close()
-		for field, fileName := range r.files {
-			fw, err := w.CreateFormFile(field, fileName)
-			// fw, err := w.CreateFormFile(field, filepath.Base(fileName))
-			if err != nil {
-				log.Println(err)
-			}
-			
-			fh, err := os.Open(fileName)
-			if err != nil {
-				panic(err)
-			}
-			
-			defer fh.Close()
-			io.Copy(fw, fh)
-		}
-		// length :=  strconv.Itoa(bf.Len())
-		r.Header("Content-Type", w.FormDataContentType())
-		// r.Header("Content-Length", length)
-		for k, v := range r.formData {
-			w.WriteField(k, v)
-		}
-
-		r.request.Body =  ioutil.NopCloser(bf)
-	} 
-	return r
-}
-
-
-//构建表单
-//这里是有文件的POST表单
-func(r *HttpRequest)PostFile(url, field, filename string) {
-
+//上传文件
+func(req *HttpRequest)File(field, filename string) *HttpRequest {
 	bf := &bytes.Buffer{}
 	w := multipart.NewWriter(bf)
-	defer w.Close()
-
-	log.Println(field)
-
 	fw, err := w.CreateFormFile(field, filename)
 	if err != nil {
 		log.Println(err)
@@ -227,31 +180,18 @@ func(r *HttpRequest)PostFile(url, field, filename string) {
 	
 	fh, err := os.Open(filename)
 	if err != nil {
-		panic(err)
+		req.err = err 
+	}
+	
+	if _, err := io.Copy(fw, fh); err != nil {
+		req.err = err
 	}
 	
 	defer fh.Close()
+	req.contentType =  w.FormDataContentType()
+	w.Close()	
 
-	io.Copy(fw, fh)
-	contentType :=  w.FormDataContentType()
-
-	// r.Header("Content-Length", length)
-	// for k, v := range r.formData {
-	// 	w.WriteField(k, v)
-	// }
-
-	resp, err := http.Post(url, contentType, bf)
-	// r.request.Body =  ioutil.NopCloser(bf)
-	
-	// log.Println("响应1",resp)	
-
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		log.Println(err)
-	}
-
-	respBody, _ := ioutil.ReadAll(resp.Body)
-	log.Println("响应", string(respBody))
+	return req
 }
 
 

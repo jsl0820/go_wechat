@@ -1,0 +1,33 @@
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+
+	fileWriter, e := bodyWriter.CreateFormFile(field, filename)
+	if e != nil {
+		log.Println(e)
+	}
+
+	fh, e := os.Open(filename)
+	if e != nil {
+		log.Println(e)
+	}
+	defer fh.Close()
+
+	if _, err := io.Copy(fileWriter, fh); err != nil {
+		log.Println(err)
+	}
+	
+
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	resp, e := http.Post(url, contentType, bodyBuf)
+	if e != nil {
+		log.Println(e)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Println(e)
+	}
+	respBody, _ := ioutil.ReadAll(resp.Body)
+	log.Println(string(respBody))
+}

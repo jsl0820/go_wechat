@@ -1,7 +1,7 @@
 package wechat
 
 import (
-	// "fmt"
+	"fmt"
 	"time"
 	"errors"
 )
@@ -32,10 +32,12 @@ func (t *Token) Refresh() error {
 
 	url := HOST + "/cgi-bin/token?"
 	url += "grant_type=client_credential&appid=" + Wxconfig.WxAppId + "&secret=" + Wxconfig.WxAppSecret
+	fmt.Println(url)
 	err := NewRequest().Get(url).JsonResp(&t.At)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

@@ -23,7 +23,11 @@ func TestConfig(t *testing.T){
 // file token.go 
 func TestToken(t *testing.T){
 	TestConfig(t)
-	tk, _ := token.Get()
+	tk, err := token.Get()
+	if err !=nil {
+		log.Println(err)
+	}
+	
 	log.Println("token", tk)
 }
 
@@ -79,18 +83,18 @@ func TestUploadImage(t *testing.T){
 }
 
 //表单上传文件测试
-func TestFormFile(t *testing.T){
-	req := NewRequest()
-	req.FormFile("test", "token.go")
-	req.Param("username", "javelin")
-	resp, err  := req.Form().Post("http://httpbin.org/post").String()
+// func TestFormFile(t *testing.T){
+// 	req := NewRequest()
+// 	req.FormFile("test", "token.go")
+// 	req.FormField("username", "javelin")
+// 	resp, err  := req.FormData().Post("http://httpbin.org/post").String()
 
-	if err != nil {
-		log.Println("111")
-	}
+// 	if err != nil {
+// 		log.Println("111")
+// 	}
 
-	log.Println(resp)
-}
+// 	log.Println(resp)
+// }
 
 func TestSaveTo(t *testing.T){
 	f := "beego_testfile"
@@ -108,14 +112,15 @@ func TestSaveTo(t *testing.T){
 }
 
 
-func TestFileUpLoad(t *testing.T){
-	config := Config{
-		WxAppId:"wx582ef3694f7a7546",
-		WxAppSecret:"148ee9063222674ef03e4c21776e02cd",
-	}
-	WxConfig(config)
-	tk, _ := token.Get()
-	
-	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=image"
-	NewRequest().PostFile(url, "media", "test.jpg")
-}
+
+// func TestFileUpLoad(t *testing.T){
+// 	config := Config{
+// 		WxAppId:"wx582ef3694f7a7546",
+// 		WxAppSecret:"148ee9063222674ef03e4c21776e02cd",
+// 	}
+// 	WxConfig(config)
+// 	tk, _ := token.Get()
+// 	log.Println(tk)
+// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=image"
+// 	NewRequest().PostFile(url, "media", "test.jpg")
+// }

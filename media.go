@@ -2,7 +2,7 @@ package wechat
 
 import (
 	"log"
-	"errors"
+	// "errors"
 )
 
 type CountResp struct {
@@ -49,20 +49,18 @@ func (m *Media)Upload(fileType , filename string)(UploadResp, error){
 	}
 
 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=" + fileType 
-	req := NewRequest().Post(url)
-	req.FormFile("media", filename)
+	req := NewRequest().File("media", filename)
+	str, _ := req.Post(url).String()
 
-	re, err := req.Form().String()
+	log.Println(str)
 
-	log.Println("返回", re)
-	
 	if err != nil {
 		return resp, err
 	}
 
-	if resp.ErrMsg != ""{
-		return resp, errors.New("请求出错" + resp.ErrMsg)
-	}
+	// if resp.ErrMsg != ""{
+	// 	return resp, errors.New("请求出错" + resp.ErrMsg)
+	// }
 
 	return resp, nil
 }

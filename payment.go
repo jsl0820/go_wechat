@@ -287,8 +287,7 @@ func(b *Bill)Get(billType, date string)*Bill{
 	body := MapToXml(b.Param)
 
 	req := NewRequest().Body(body).Post(url)
-	req.Header("Accept", "application/xml")
-	req.Header("Content-Type", "application/xml;charset=utf-8")
+	req.ContentType("application/xml;charset=utf-8")
 
 	var resp DownLoadBillResp
 	err := req.XmlResp(&resp)
@@ -335,8 +334,7 @@ func (p *Pay)Close(codeType, code string)CloseResp{
 
 	var resp CloseResp
 	req := NewRequest().Body(body).Post(url)
-	req.Header("Accept", "application/xml")
-	req.Header("Content-Type", "application/xml;charset=utf-8")
+	req.ContentType("application/xml;charset=utf-8")
 	err := req.XmlResp(&resp)
 	if err != nil {
 		fmt.Println(err)
@@ -404,8 +402,7 @@ func NewPay(plat string) *Pay {
 //请求
 func PayRequest(url string, body interface{},  resp interface{}) error {
 	req := NewRequest().Body(body).Post(url)
-	req.Header("Accept", "application/xml")
-	req.Header("Content-Type", "application/xml;charset=utf-8")
+	req.ContentType("application/xml;charset=utf-8")
 	err := req.XmlResp(resp)
 	if err != nil {
 		return err 
