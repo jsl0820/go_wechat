@@ -9,6 +9,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"crypto/sha1"
+	"text/template"
 )
 
 // 设置时间戳
@@ -97,7 +98,38 @@ func MapToXml(data map[string]string) string {
 	return xml
 }
 
-//保存到
-func SaveTo(path string){
-
+type JsonPare struct {
+	Input string
+	Output string
+	Data map[string]string
 }
+
+func (js *JsonPare)Write(b []byte) (n int, err error) {
+	js.Output += string(b)
+    return len(b), nil
+}
+
+func (js *JsonPare)Pare(){
+	tmpl, err := template.New("json").Parse(js.Input)
+	if err != nil { 
+		panic(err) 
+	}
+
+	err = tmpl.Execute(js, js.Data)
+	if err != nil { 
+		panic(err) 
+	}
+}
+
+//
+func PareToJson(josnTmpl string, data map[string]string) string {
+
+	js := &JsonPare{
+		Data:data,
+		Input:josnTmpl,
+	}
+
+	js.Pare()
+	return js.Output
+}
+
