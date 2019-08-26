@@ -25,7 +25,8 @@ type Token struct {
 	At      AccessToken
 }
 
-var token = &Token{Expires: 7200}
+
+var TokenInstance = &Token{Expires: 7200}
 
 //刷新token
 func (t *Token) Refresh() error {
@@ -67,7 +68,7 @@ func (t *Token) Get() (string, error) {
 }
 
 //定期清空 时间间隔为 TokenGcTime
-func (t *Token) clear() {
+func (t *Token) clean() {
 	duration := time.Duration(t.Expires) * time.Second
 	for {
 		<-time.After(duration)
@@ -78,5 +79,5 @@ func (t *Token) clear() {
 }
 
 func init() {
-	go token.clear()
+	go token.clean()
 }
