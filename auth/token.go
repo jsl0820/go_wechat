@@ -1,9 +1,9 @@
-package wechat
+package auth
 
 import (
+	"errors"
 	"fmt"
 	"time"
-	"errors"
 )
 
 var (
@@ -14,17 +14,16 @@ var (
 )
 
 type AccessToken struct {
+	Errmsg      string `json:"errmsg"`
+	Errcode     int    `json:"errcode"`
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
-	Errcode     int    `json:"errcode"`
-	Errmsg      string `json:"errmsg"`
 }
 
 type Token struct {
 	Expires int
 	At      AccessToken
 }
-
 
 var TokenInstance = &Token{Expires: 7200}
 
@@ -64,7 +63,7 @@ func (t *Token) Get() (string, error) {
 		}
 	}
 
-	return t.At.AccessToken , nil 
+	return t.At.AccessToken, nil
 }
 
 //定期清空 时间间隔为 TokenGcTime
