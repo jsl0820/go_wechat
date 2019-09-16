@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
+
+const SNSAPIBASE_URL = "/sns/oauth2/access_token?appid={{APPID}}&secret={{SECRET}}&code={{CODE}}"
 
 type SnsapiBase struct {
 	AccessToken  string `json:"access_token"`
@@ -32,7 +35,7 @@ type SnsapiUserInfo struct {
 	Errmsg     string        `json:"errmsg"`
 }
 
-func NewOauth() *Oauth {
+func New() *Oauth {
 	return new(Oauth)
 }
 
@@ -44,17 +47,13 @@ type Oauth struct {
 }
 
 // 获取SnsapiBase
-func (o *Oauth) GetSnsapiBase() (SnsapiBase, error) {
-	fmt.Println(Appid, AppSecret)
+func (o *Oauth) SnsapiBase() (SnsapiBase, error) {
 	var err error
-	url := HOST + "/sns/oauth2/access_token?"
-	url += "appid=" + Appid + "&secret=" + AppSecret + "&code=" + o.Code
-	url += "&grant_type=authorization_code"
 
-	resp, err := http.Get(url)
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	url := Url(SNSAPIBASE_URL)
+	url = strings.Replace(SNSAPIBASE_URL, "{{APPID}}", GetConfig.Appid, -1)
+	uri = strings.Replace(SNSAPIBASE_URL, "{{SECRET}}", GetConfig.Secret, -1)
+	uri = strings.Replace(SNSAPIBASE_URL, "{{CODE}}", GetConfig.Secret, -1)
 
 	var s SnsapiBase
 	json.Unmarshal(body, &s)
@@ -73,7 +72,7 @@ func (o *Oauth) GetSnsapiBase() (SnsapiBase, error) {
 }
 
 //获取UserInfo
-func (o *Oauth) GetSnsapiUserInfo() (SnsapiUserInfo, error) {
+func (o *Oauth) SnsapiUserInfo() (SnsapiUserInfo, error) {
 	var err error
 	// o.RefreshTokenAction()
 
@@ -81,11 +80,6 @@ func (o *Oauth) GetSnsapiUserInfo() (SnsapiUserInfo, error) {
 	url += o.AccessToken + "&openid=" + o.Openid + "&lang=zh_CN"
 
 	fmt.Println("access_token:", o.AccessToken)
-
-	resp, err := http.Get(url)
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
 
 	var info SnsapiUserInfo
 	json.Unmarshal(body, &info)
