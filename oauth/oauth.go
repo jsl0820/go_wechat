@@ -1,4 +1,4 @@
-package wechat
+package oauth
 
 import (
 	"net/http"	

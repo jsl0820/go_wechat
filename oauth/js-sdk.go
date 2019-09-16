@@ -1,4 +1,4 @@
-package wechat
+package oauth
 
 import (
 	"fmt"
@@ -13,7 +13,6 @@ type TicketResp struct {
 }
 
 var ticket = &Ticket{expires:7200}
-
 
 type Ticket struct {
 	expires int
@@ -106,6 +105,9 @@ func (j *JsSdk)Get() map[string]string {
 	}
 }
 
+func Ticket()string{
+	
+}
 
 func init() {
 	go ticket.Clear()		

@@ -1,10 +1,13 @@
-package auth
+package oauth
 
 import (
 	"errors"
-	"fmt"
+	"log"
+	"strings"
 	"time"
 )
+
+const TOKEN_URL = "/cgi-bin/token?grant_type=client_credential&appid={{APPID}}&secret={{APP_SECRITE}}"
 
 var (
 	TOKEN_ERROR_1 = "系统繁忙，此时请开发者稍候再试"
@@ -13,7 +16,7 @@ var (
 	TOKEN_ERROR_4 = "调用接口的IP地址不在白名单中，请在接口IP白名单中进行设置。小程序及小游戏调用不要求IP地址在白名单内"
 )
 
-type AccessToken struct {
+type TokenResp struct {
 	Errmsg      string `json:"errmsg"`
 	Errcode     int    `json:"errcode"`
 	AccessToken string `json:"access_token"`
@@ -22,17 +25,11 @@ type AccessToken struct {
 
 type Token struct {
 	Expires int
-	At      AccessToken
+	At      TokenResp
 }
-
-var TokenInstance = &Token{Expires: 7200}
 
 //刷新token
 func (t *Token) Refresh() error {
-
-	url := HOST + "/cgi-bin/token?"
-	url += "grant_type=client_credential&appid=" + Wxconfig.WxAppId + "&secret=" + Wxconfig.WxAppSecret
-	fmt.Println(url)
 	err := NewRequest().Get(url).JsonResp(&t.At)
 	if err != nil {
 		return err
@@ -48,7 +45,6 @@ func (t *Token) Get() (string, error) {
 		if err != nil {
 			return "", err
 		}
-
 		switch t.At.Errcode {
 		case -1:
 			return "", errors.New(TOKEN_ERROR_1)
@@ -75,6 +71,16 @@ func (t *Token) clean() {
 			t.At = AccessToken{}
 		}
 	}
+}
+
+//构建请求
+func Url(url string) string {
+	if token, err := TokenInstance.Get(); err != nil {
+		panic(err)
+		log.Println(err)
+	}
+
+	return strings.Replace(url, "{{TOKEN}}", token, -1)
 }
 
 func init() {
