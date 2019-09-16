@@ -7,7 +7,7 @@ import (
 	"errors"
 )
 
-type UserResp struct {
+type Resp struct {
 	ErrCode int    `json:"errcode"`
 	ErrMsg  string `json:"errmsg"`
 }
@@ -170,7 +170,7 @@ func (u *Users)QueryAll(ids []map[string]string) (*[]User, error) {
 // }
 
 //获取黑名单
-func(u *Users)GetBlackList(openid string )(BlackListResp, error){
+func(u *Users)BlackList(openid string )(BlackListResp, error){
 
 	var resp BlackListResp
 	err := NewRequest().JsonResp(&resp)

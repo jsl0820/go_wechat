@@ -6,19 +6,18 @@ package wechat
 // var MpAppsecret string
 // var MchId string
 // var PayKey string
-const  HOST = "https://api.weixin.qq.com"
+const HOST = "https://api.weixin.qq.com"
 
 var Wxconfig Config
 
 type Config struct {
-	WxAppId string 
-	WxAppSecret string 
-	MpAppid string 
-	MpAppsecret string 
-	PayKey string 
-	MchId string 
+	WxAppId     string
+	WxAppSecret string
+	MpAppid     string
+	MpAppsecret string
+	PayKey      string
+	MchId       string
 }
-
 
 // func init() {
 // 	// WxAppId = "wx582ef3694f7a7546"
@@ -29,6 +28,6 @@ type Config struct {
 // 	// PayKey = "" //支付秘钥
 // }
 
-func WxConfig(config Config){
+func WxConfig(config Config) {
 	Wxconfig = config
 }
