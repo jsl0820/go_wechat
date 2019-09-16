@@ -128,14 +128,3 @@ func PareToJson(josnTmpl string, data map[string]string) string {
 	js.Pare()
 	return js.Output
 }
-
-
-//构建请求
-func Url(url string) string {
-	if token, err := TokenInstance.Get(); err != nil {
-		panic(err)
-		log.Println(err)
-	}
-
-	return strings.Replace(url, "{{TOKEN}}", token, -1)
-}

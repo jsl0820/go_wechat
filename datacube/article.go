@@ -1,9 +1,5 @@
 package datacube
 
-import(
-	
-)
-
 const INTERFACE_SUMMARY = "/datacube/getinterfacesummary?access_token={{TOKEN}}"
 const INTERFACE_SUMMARY_HOUR = "/datacube/getinterfacesummaryhour?access_token={{TOKEN}}"
 
@@ -15,7 +11,7 @@ type InterfaceResp struct {
 	MaxTimeCost   uint
 }
 
-type InterfaceRespList map[string]InterfaceResp{}
+// type InterfaceRespList InterfaceResp{}
 
 type Interface struct {
 	Datacube
@@ -29,6 +25,6 @@ func (i *Interface) Summary() *Analysis {
 	if err := req.JsonResp(&resp); err != nil {
 		return resp, err
 	}
-	 
+
 	return resp, nil
 }

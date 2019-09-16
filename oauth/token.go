@@ -2,9 +2,10 @@ package oauth
 
 import (
 	"errors"
-	"log"
 	"strings"
 	"time"
+
+	. "github.com/jsl0820/wechat"
 )
 
 const TOKEN_URL = "/cgi-bin/token?grant_type=client_credential&appid={{APPID}}&secret={{APP_SECRITE}}"
@@ -24,14 +25,17 @@ type TokenResp struct {
 }
 
 type Token struct {
-	Expires int
-	At      TokenResp
+	Expires     int
+	AccessToken TokenResp
 }
 
 //刷新token
 func (t *Token) Refresh() error {
-	err := NewRequest().Get(url).JsonResp(&t.At)
-	if err != nil {
+	url = strings.Replace(url, "{{APPID}}", GetConfig().WxAppId)
+	url = strings.Replace(url, "{{APP_SECRITE}}", GetConfig().WxAppSecret)
+	url = HOST + url
+	if err := NewRequest().Get(url).JsonResp(&t.At); err != nil {
+		panic(err)
 		return err
 	}
 
@@ -40,11 +44,11 @@ func (t *Token) Refresh() error {
 
 //获取token
 func (t *Token) Get() (string, error) {
-	if t.At == (AccessToken{}) {
-		err := t.Refresh()
-		if err != nil {
+	if t.AccessToken == (AccessToken{}) {
+		if err := t.Refresh(); err != nil {
 			return "", err
 		}
+
 		switch t.At.Errcode {
 		case -1:
 			return "", errors.New(TOKEN_ERROR_1)
@@ -75,14 +79,14 @@ func (t *Token) clean() {
 
 //构建请求
 func Url(url string) string {
-	if token, err := TokenInstance.Get(); err != nil {
+	token, err := TokenInstance.Get()
+	if err != nil {
 		panic(err)
-		log.Println(err)
 	}
 
 	return strings.Replace(url, "{{TOKEN}}", token, -1)
 }
 
 func init() {
-	go token.clean()
+	go TokenInstance.clean()
 }
