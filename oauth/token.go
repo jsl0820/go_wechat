@@ -31,10 +31,11 @@ type Token struct {
 
 //刷新token
 func (t *Token) Refresh() error {
-	url = strings.Replace(url, "{{APPID}}", GetConfig().WxAppId)
-	url = strings.Replace(url, "{{APP_SECRITE}}", GetConfig().WxAppSecret)
+	url := TOKEN_URL
+	url = strings.Replace(url, "{{APPID}}", GetConfig().WxAppId, -1)
+	url = strings.Replace(url, "{{APP_SECRITE}}", GetConfig().WxAppSecret, -1)
 	url = HOST + url
-	if err := NewRequest().Get(url).JsonResp(&t.At); err != nil {
+	if err := NewRequest().Get(url).JsonResp(&t.AccessToken); err != nil {
 		panic(err)
 		return err
 	}

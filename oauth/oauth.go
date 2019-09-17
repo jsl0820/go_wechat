@@ -7,9 +7,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	. "github.com/jsl0820/wechat"
 )
 
+const SNSAPIAUTH_URL = "/sns/auth?access_token={{TOKEN}}&openid={{OPENID}}"
 const SNSAPIBASE_URL = "/sns/oauth2/access_token?appid={{APPID}}&secret={{SECRET}}&code={{CODE}}"
+const SNSAPIINFO_URL = "/sns/userinfo?access_token={{TOKEN}}&openid={{OPENID}}&lang=zh_CN"
 
 type SnsapiBase struct {
 	AccessToken  string `json:"access_token"`
@@ -35,8 +39,8 @@ type SnsapiUserInfo struct {
 	Errmsg     string        `json:"errmsg"`
 }
 
-func New() *Oauth {
-	return new(Oauth)
+func New(code string) *Oauth {
+	return &Oauth{Code: code}
 }
 
 type Oauth struct {
@@ -51,9 +55,9 @@ func (o *Oauth) SnsapiBase() (SnsapiBase, error) {
 	var err error
 
 	url := Url(SNSAPIBASE_URL)
-	url = strings.Replace(SNSAPIBASE_URL, "{{APPID}}", GetConfig.Appid, -1)
-	uri = strings.Replace(SNSAPIBASE_URL, "{{SECRET}}", GetConfig.Secret, -1)
-	uri = strings.Replace(SNSAPIBASE_URL, "{{CODE}}", GetConfig.Secret, -1)
+	url = strings.Replace(SNSAPIBASE_URL, "{{CODE}}", o.Code, -1)
+	url = strings.Replace(SNSAPIBASE_URL, "{{APPID}}", GetConfig().WxAppId, -1)
+	url = strings.Replace(SNSAPIBASE_URL, "{{SECRET}}", GetConfig().WxAppSecret, -1)
 
 	var s SnsapiBase
 	json.Unmarshal(body, &s)
@@ -75,12 +79,7 @@ func (o *Oauth) SnsapiBase() (SnsapiBase, error) {
 func (o *Oauth) SnsapiUserInfo() (SnsapiUserInfo, error) {
 	var err error
 	// o.RefreshTokenAction()
-
-	url := "https://api.weixin.qq.com/sns/userinfo?access_token="
-	url += o.AccessToken + "&openid=" + o.Openid + "&lang=zh_CN"
-
 	fmt.Println("access_token:", o.AccessToken)
-
 	var info SnsapiUserInfo
 	json.Unmarshal(body, &info)
 
