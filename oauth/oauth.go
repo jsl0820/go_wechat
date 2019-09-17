@@ -14,6 +14,7 @@ import (
 const SNSAPIAUTH_URL = "/sns/auth?access_token={{TOKEN}}&openid={{OPENID}}"
 const SNSAPIBASE_URL = "/sns/oauth2/access_token?appid={{APPID}}&secret={{SECRET}}&code={{CODE}}"
 const SNSAPIINFO_URL = "/sns/userinfo?access_token={{TOKEN}}&openid={{OPENID}}&lang=zh_CN"
+const TOKEN_REFRESH_URL = "/sns/auth?access_token={{TOKEN}}&openid={{OPENID}}"
 
 type SnsapiBase struct {
 	AccessToken  string `json:"access_token"`
@@ -91,8 +92,8 @@ func (o *Oauth) RefreshTokenAction() bool {
 
 	isExpires := false
 
-	url := "https://api.weixin.qq.com/sns/auth"
-	url += "?access_token=" + o.AccessToken + "&openid=" + o.Openid
+	url := Url(TOKEN_REFRESH_URL)
+	url = strings.Replace(url, "{{OPENID}}", GetConfig().WxAppId, -1)
 
 	type AccessToken struct {
 		Errcode string `json:"errcode"`
