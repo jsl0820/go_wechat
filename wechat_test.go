@@ -1,47 +1,24 @@
 package wechat
 
 import (
+	"io/ioutil"
 	"log"
-	"testing"
 	"os"
 	"strings"
-	"io/ioutil"
-)	
+	"testing"
+)
 
 var openid = "oKPxfwK493kkbIH1dBrIP-nBADBc"
+
 //go test -v wechat_test.go  ip_list.go wechat.go http.go  token.go -run TestIp
 
-func TestConfig(t *testing.T){
+func TestConfig(t *testing.T) {
 	config := Config{
-		WxAppId:"wx75d0a800a00671a1",
-		WxAppSecret:"de3426ea07a05887a220c91232fcc9e7",
+		WxAppId:     "wx75d0a800a00671a1",
+		WxAppSecret: "de3426ea07a05887a220c91232fcc9e7",
 	}
 	WxConfig(config)
 	log.Println(Wxconfig)
-}
-
-// file token.go 
-func TestToken(t *testing.T){
-	TestConfig(t)
-	tk, err := token.Get()
-	if err !=nil {
-		log.Println(err)
-	}
-	
-	log.Println("token", tk)
-}
-
-func TestReflash(t *testing.T){
-	token := &Token{Expires: 7200}
-	token.Refresh()
-}
-
-// file ip_list
-//获取微信服务器列表
-func TestIpList(t *testing.T){
-	TestToken(t)
-	ips, err := IpList()
-	log.Println(ips, err)
 }
 
 // func TestKfAdd(t *testing.T){
@@ -65,22 +42,22 @@ func TestIpList(t *testing.T){
 // 	log.Println(u, err)
 // }
 
-func TestUploadImage(t *testing.T){
-	config := Config{
-		WxAppId:"wx582ef3694f7a7546",
-		WxAppSecret:"148ee9063222674ef03e4c21776e02cd",
-	}
-	WxConfig(config)
+// func TestUploadImage(t *testing.T) {
+// 	config := Config{
+// 		WxAppId:     "wx582ef3694f7a7546",
+// 		WxAppSecret: "148ee9063222674ef03e4c21776e02cd",
+// 	}
+// 	WxConfig(config)
 
-	m := &Media{}
-	id, err := m.UploadImg("test.jpg")
-	if err != nil {
-		log.Println("err", err)
-	}
+// 	m := &Media{}
+// 	id, err := m.UploadImg("test.jpg")
+// 	if err != nil {
+// 		log.Println("err", err)
+// 	}
 
-	log.Println(id)
+// 	log.Println(id)
 
-}
+// }
 
 //表单上传文件测试
 // func TestFormFile(t *testing.T){
@@ -96,7 +73,7 @@ func TestUploadImage(t *testing.T){
 // 	log.Println(resp)
 // }
 
-func TestSaveTo(t *testing.T){
+func TestSaveTo(t *testing.T) {
 	f := "beego_testfile"
 	req := NewRequest().Get("http://httpbin.org/ip")
 	err := req.SaveTo(f)
@@ -110,8 +87,6 @@ func TestSaveTo(t *testing.T){
 		t.Fatal(err)
 	}
 }
-
-
 
 // func TestFileUpLoad(t *testing.T){
 // 	config := Config{

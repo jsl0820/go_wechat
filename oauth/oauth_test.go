@@ -15,6 +15,13 @@ func TestConfig(t *testing.T) {
 	WxConfig(config)
 	log.Println(Wxconfig)
 }
+
 func TestToken(t *testing.T) {
-	log.Println("hello")
+	// TestConfig(t)
+	token, err := GetToken()
+	if err != nil {
+		log.Println(err)
+	}
+
+	log.Println("从服务器获得到的", token)
 }

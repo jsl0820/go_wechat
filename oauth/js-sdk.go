@@ -12,8 +12,8 @@ const TICKET_URL = "/cgi-bin/ticket/getticket?type=jsapi&access_token={{TOKEN}}"
 var ticketInstance = &Ticket{Expires: GetConfig().Expires}
 
 type Ticket struct {
-	Ticket  string
 	Expires uint
+	Ticket  string
 }
 
 //刷新票据
