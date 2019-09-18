@@ -50,5 +50,5 @@ func (m *Message) Distweek() {
 }
 
 func (m *Message) Distmonth() {
-
+	
 }

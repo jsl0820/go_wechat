@@ -18,7 +18,6 @@ func WxConfig(config Config) {
 	Wxconfig = config
 }
 
-
-func GetConfig()Config{
+func GetConfig() Config {
 	return Wxconfig
 }

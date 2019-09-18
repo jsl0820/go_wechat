@@ -1,46 +1,46 @@
-package wechat
+package media
 
 import (
 	"log"
 	// "errors"
+	. "github.com/jsl0820/wechat"
 )
 
 type CountResp struct {
-	Url string `json:"url"`
-	ErrCode int `json:"errcode"`
-	ErrMsg string `json:"errmsg"`
-	CoiceCount int `json:"voice_count"`
-	VideoCount int `json:"video_count"`
-	ImageCount int `json:"image_count"`
-	NewsCount  int `json:"news_count"` 
+	Url        string `json:"url"`
+	ErrCode    int    `json:"errcode"`
+	ErrMsg     string `json:"errmsg"`
+	CoiceCount int    `json:"voice_count"`
+	VideoCount int    `json:"video_count"`
+	ImageCount int    `json:"image_count"`
+	NewsCount  int    `json:"news_count"`
 }
 
-type MediaResp struct{
-	ErrCode int `json:"errcode"`
-	ErrMsg string `json:"errmsg"`
-	CoiceCount int `json:"voice_count"`
-	VideoCount int `json:"video_count"`
-	ImageCount int `json:"image_count"`
-	NewsCount  int `json:"news_count"` 
-	Type string `json:"type"`
-	MediaId string `json:"media_id"`
-	CreatedAt string `json:"created_at"`
+type MediaResp struct {
+	ErrCode    int    `json:"errcode"`
+	ErrMsg     string `json:"errmsg"`
+	CoiceCount int    `json:"voice_count"`
+	VideoCount int    `json:"video_count"`
+	ImageCount int    `json:"image_count"`
+	NewsCount  int    `json:"news_count"`
+	Type       string `json:"type"`
+	MediaId    string `json:"media_id"`
+	CreatedAt  string `json:"created_at"`
 }
 
 type UploadResp struct {
-	ErrCode int `json:"errcode"`
-	ErrMsg string `json:"errmsg"`
-	Type string `json:"type"`
-	MediaId string `json:"media_id"`
+	ErrCode   int    `json:"errcode"`
+	ErrMsg    string `json:"errmsg"`
+	Type      string `json:"type"`
+	MediaId   string `json:"media_id"`
 	CreatedAt string `json:"created_at"`
 }
 
 type Media struct {
-	
 }
 
 //上传临时素材
-func (m *Media)Upload(fileType , filename string)(UploadResp, error){
+func (m *Media) Upload(fileType, filename string) (UploadResp, error) {
 	var resp UploadResp
 	tk, err := token.Get()
 	if err != nil {
@@ -48,7 +48,7 @@ func (m *Media)Upload(fileType , filename string)(UploadResp, error){
 		return resp, err
 	}
 
-	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=" + fileType 
+	url := HOST + "/cgi-bin/media/upload?access_token=" + tk + "&type=" + fileType
 	req := NewRequest().File("media", filename)
 	str, _ := req.Post(url).String()
 
@@ -65,16 +65,15 @@ func (m *Media)Upload(fileType , filename string)(UploadResp, error){
 	return resp, nil
 }
 
-
 //上传图片
-func(m *Media)UploadImg(filename string)(string, error){
-	resp, err := m.Upload("image", filename) 
+func (m *Media) UploadImg(filename string) (string, error) {
+	resp, err := m.Upload("image", filename)
 
 	if err != nil {
-		return "", err 
+		return "", err
 	}
 
-	return resp.MediaId, nil 
+	return resp.MediaId, nil
 }
 
 //上传声音
@@ -85,7 +84,7 @@ func(m *Media)UploadImg(filename string)(string, error){
 // 		return "", err
 // 	}
 
-// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=voice" 
+// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=voice"
 // 	var resp UploadResp
 // 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
 // 	if err != nil {
@@ -93,7 +92,7 @@ func(m *Media)UploadImg(filename string)(string, error){
 // 		return "", err
 // 	}
 
-// 	return resp.MediaId, nil 
+// 	return resp.MediaId, nil
 // }
 
 //上传视频
@@ -104,7 +103,7 @@ func(m *Media)UploadImg(filename string)(string, error){
 // 		return "", err
 // 	}
 
-// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=video" 
+// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=video"
 // 	var resp UploadResp
 // 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
 // 	if err != nil {
@@ -112,7 +111,7 @@ func(m *Media)UploadImg(filename string)(string, error){
 // 		return "", err
 // 	}
 
-// 	return resp.MediaId, nil 
+// 	return resp.MediaId, nil
 // }
 
 //上传缩略图
@@ -123,7 +122,7 @@ func(m *Media)UploadImg(filename string)(string, error){
 // 		return "", err
 // 	}
 
-// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=video" 
+// 	url := HOST + "/cgi-bin/media/upload?access_token="+ tk + "&type=video"
 // 	var resp UploadResp
 // 	err = NewRequest().Upload(filename).Post(url).JsonResp(&resp)
 // 	if err != nil {
@@ -131,7 +130,7 @@ func(m *Media)UploadImg(filename string)(string, error){
 // 		return "", err
 // 	}
 
-// 	return resp.MediaId, nil 
+// 	return resp.MediaId, nil
 // }
 
 // //下载素材
@@ -150,7 +149,6 @@ func(m *Media)UploadImg(filename string)(string, error){
 
 // 	return nil
 // }
-
 
 //获取视频
 // func (m *Media)GetVedio(id string)(string, error){
@@ -187,9 +185,8 @@ func(m *Media)UploadImg(filename string)(string, error){
 // 	return true, nil
 // }
 
-
 //统计
-func (m *Media)Count()(CountResp, error){
+func (m *Media) Count() (CountResp, error) {
 	tk, err := token.Get()
 	if err != nil {
 		return CountResp{}, err
@@ -199,29 +196,29 @@ func (m *Media)Count()(CountResp, error){
 	var resp CountResp
 	err = NewRequest().Get(url).JsonResp(&resp)
 	if err != nil {
-		return resp, nil 
+		return resp, nil
 	}
 
 	return resp, nil
 }
 
 //获取素材列表
-//t:类型 参数：'image', 'vedio', 'voice', 'news' 
+//t:类型 参数：'image', 'vedio', 'voice', 'news'
 //off:偏移量 count:返回的数量
-func (m *Media) List(t, off, count string){
+func (m *Media) List(t, off, count string) {
 
 }
 
 type Article struct {
-	Title string `json:"title"`
-	ThumbMediaId string `json:"thumb_media_id"`
-	Author string `json:"author"` 
-	Digest string `json:"digest"`
-	ShowCoverPic int `json:"show_cover_pic"`
-	Content string `json:"content"`
-	ContentSourceUrl string `json:"content_source_url"`
-	NeedOpenComment int  `json:"need_open_comment"`
-	OnlyFansCanComment int `json:"only_fans_can_comment"`
+	Title              string `json:"title"`
+	ThumbMediaId       string `json:"thumb_media_id"`
+	Author             string `json:"author"`
+	Digest             string `json:"digest"`
+	ShowCoverPic       int    `json:"show_cover_pic"`
+	Content            string `json:"content"`
+	ContentSourceUrl   string `json:"content_source_url"`
+	NeedOpenComment    int    `json:"need_open_comment"`
+	OnlyFansCanComment int    `json:"only_fans_can_comment"`
 }
 
 //上传图文
@@ -236,11 +233,11 @@ type Article struct {
 // 	url := HOST + "/cgi-bin/material/add_news?access_token=" + ACCESS_TOKEN
 // 	err := NewRequest().Body(body).Post(url).Resp(&)
 // 	if err != nil {
-// 		return "", err 
+// 		return "", err
 // 	}
 
 // 	return resp.MediaId, nil
-// } 
+// }
 
 // //上传图文消息的图片
 // func (a *Article)UploadImg(path string)(string, error){
@@ -254,43 +251,33 @@ type Article struct {
 // }
 
 //获取
-func (a *Article)Get(id string){
+func (a *Article) Get(id string) {
 
 }
-
-
-
-
 
 //图片
 type Image struct {
-
 }
 
 //上传
-func (i *Image)Upload(){
+func (i *Image) Upload() {
 
 }
 
 //下载
-func (i *Image)Download(){
+func (i *Image) Download() {
 
 }
 
 //删除
-func (i *Image)Del(){
+func (i *Image) Del() {
 
 }
-
 
 //视频
 type Voice struct {
-
 }
 
-
-
 //缩略图
-type Thumb struct{
-
+type Thumb struct {
 }

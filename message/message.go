@@ -1,4 +1,4 @@
-package wechat
+package message
 
 import (
 	"encoding/json"
@@ -19,13 +19,13 @@ type TempMsgResp struct {
 	Msgid   string `json:"msgid"`
 }
 
-type TempInfo struct{
-	TemplateId string `json:"template_id"` 
-	Title string `json:"title"`
+type TempInfo struct {
+	TemplateId      string `json:"template_id"`
+	Title           string `json:"title"`
 	PrimaryIndustry string `json:"primary_industry"`
-	DeputyIndustry string `json:"deputy_industry"`
-	Content string `json:"content"`
-	Example string `json:"example"`
+	DeputyIndustry  string `json:"deputy_industry"`
+	Content         string `json:"content"`
+	Example         string `json:"example"`
 }
 
 // 模板消息
@@ -41,9 +41,8 @@ func (t *TempMsg) Wx(cfg TempMsgCfg, token string) {
 	t.url = HOST + "/cgi-bin/message/template/send?access_token=ACCESS_TOKEN"
 }
 
-
 //设置所在行业
-func(t *TempMsg) SetIndustry(idst1, idst2 string)(bool, error){
+func (t *TempMsg) SetIndustry(idst1, idst2 string) (bool, error) {
 	tk, err := token.Get()
 	if err != nil {
 		return false, err
@@ -58,27 +57,27 @@ func(t *TempMsg) SetIndustry(idst1, idst2 string)(bool, error){
 		return false, err
 	}
 
-	return true, nil	
+	return true, nil
 }
 
 //获取所在行业的信息
-func (t *TempMsg) IndustryInfo() (string , error) {
+func (t *TempMsg) IndustryInfo() (string, error) {
 	tk, err := token.Get()
 	if err != nil {
-		return  "", err
-	} 
-	
+		return "", err
+	}
+
 	url := HOST + "/cgi-bin/template/get_industry?access_token=" + tk
 	resp, err := NewRequest().Post(url).String()
 	if err != nil {
 		return "", err
-	}	
-	
+	}
+
 	return resp, err
 }
 
 //获取模板列表
-func (t *TempMsg) TempList()([]TempInfo, error){
+func (t *TempMsg) TempList() ([]TempInfo, error) {
 	var resp []TempInfo
 	tk, err := token.Get()
 	if err != nil {
@@ -95,7 +94,7 @@ func (t *TempMsg) TempList()([]TempInfo, error){
 }
 
 //获取模板列表
-func (t *TempMsg) GetTempId(no string)(TempMsgResp, error){
+func (t *TempMsg) GetTempId(no string) (TempMsgResp, error) {
 	var resp TempMsgResp
 	tk, err := token.Get()
 	if err != nil {
@@ -111,9 +110,8 @@ func (t *TempMsg) GetTempId(no string)(TempMsgResp, error){
 	return resp, err
 }
 
-
 //删除模板
-func (t *TempMsg)DelTemp(templateId string)(bool, error){
+func (t *TempMsg) DelTemp(templateId string) (bool, error) {
 	tk, err := token.Get()
 	if err != nil {
 		fmt.Println(err)
@@ -151,5 +149,3 @@ func (t *TempMsg) Send(data map[string]string) error {
 
 	return nil
 }
-
-
