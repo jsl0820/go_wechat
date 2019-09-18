@@ -1,20 +1,37 @@
 package oauth
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
-	"net/http"
+	"log"
 	"strings"
 
 	. "github.com/jsl0820/wechat"
 )
 
-const SNSAPIAUTH_URL = "/sns/auth?access_token={{TOKEN}}&openid={{OPENID}}"
-const SNSAPIBASE_URL = "/sns/oauth2/access_token?appid={{APPID}}&secret={{SECRET}}&code={{CODE}}"
-const SNSAPIINFO_URL = "/sns/userinfo?access_token={{TOKEN}}&openid={{OPENID}}&lang=zh_CN"
-const TOKEN_REFRESH_URL = "/sns/auth?access_token={{TOKEN}}&openid={{OPENID}}"
+const OAUTH_URL = "/connect/oauth2/authorize?appid={{APPID}}&redirect_uri={{REDIRECT_URI}}&response_type=code&scope={{SCOPE}}&state=STATE#wechat_redirect"
+const OATH_TOKEN_URL = "/sns/oauth2/access_token?appid={{APPID}}&secret={{SECRET}}&code={{CODE}}"
+const USERINFO_URL = "/sns/userinfo?access_token={{TOKEN}}&openid={{OPENID}}&lang=zh_CN"
+const TOKEN_EXPIRED = "/sns/auth?access_token={{TOKEN}}&openid={{OPENID}}"
+
+// var (
+// 	OAUTH_ERROR =
+// )
+
+//
+func OauthUrl(url, string, t uint8) string {
+	scope := "snsapi_base"
+	if t == 2 {
+		scope = "snsapi_userinfo"
+	}
+
+	uri := HOST + OAUTH_URL
+	uri = Url(uri)
+	uri = strings.Replace(uri, "{{SCOPE}}", scope, -1)
+	uri = strings.Replace(uri, "{{REDIRECT_URI}}", uri, -1)
+	uri = strings.Replace(uri, "{{APPID}}", GetConfig().WxAppId, -1)
+
+	return uri
+}
 
 type SnsapiBase struct {
 	AccessToken  string `json:"access_token"`
@@ -26,7 +43,7 @@ type SnsapiBase struct {
 	Errmsg       string `json:"errmsg"`
 }
 
-type SnsapiUserInfo struct {
+type UserInfo struct {
 	Openid     string        `json:"openid"`
 	Nickname   string        `json:"nickname"`
 	Sex        int           `json:"sex"`
@@ -51,97 +68,66 @@ type Oauth struct {
 	RefreshToken string
 }
 
+func (o *Oauth) token() {
+	url := strings.Replace(OATH_TOKEN_URL, "{{APPID}}", GetConfig().WxAppId, -1)
+	url = strings.Replace(url, "{{SECRET}}", GetConfig().WxAppSecret, -1)
+	url = strings.Replace(url, "{{CODE}}", o.Code, -1)
+
+	resp := make(map[string]string)
+	if err := NewRequest().Get(url).JsonResp(&resp); err != nil {
+		panic(err)
+	}
+
+	if resp["errcode"] != "" {
+		panic(resp["errmsg"])
+	}
+
+	o.Openid = resp["openid"]
+	o.AccessToken = resp["access_token"]
+	o.RefreshToken = resp["refresh_token"]
+}
+
+//验证token是否过期
+func (o *Oauth) isTokenExpired() bool {
+	url := HOST + TOKEN_EXPIRED
+	url = strings.Replace(url, "{{OPENDID}}", o.Openid, -1)
+	url = strings.Replace(url, "{{TOKEN}}", o.AccessToken, -1)
+
+	resp := make(map[string]string)
+	if err := NewRequest().Get(url).JsonResp(&resp); err != nil {
+		log.Println(err)
+		return false
+	}
+
+	if resp["errcode"] == "0" {
+		return true
+	}
+
+	log.Println("code:", resp["code"], ", msg:"+resp["errmag"])
+	return false
+}
+
 // 获取SnsapiBase
-func (o *Oauth) SnsapiBase() (SnsapiBase, error) {
-	var err error
+func (o *Oauth) UserInfo() (UserInfo, error) {
 
-	url := Url(SNSAPIBASE_URL)
-	url = strings.Replace(SNSAPIBASE_URL, "{{CODE}}", o.Code, -1)
-	url = strings.Replace(SNSAPIBASE_URL, "{{APPID}}", GetConfig().WxAppId, -1)
-	url = strings.Replace(SNSAPIBASE_URL, "{{SECRET}}", GetConfig().WxAppSecret, -1)
-
-	var s SnsapiBase
-	json.Unmarshal(body, &s)
-
-	fmt.Println(s.Errcode)
-
-	if s.Errcode != "" {
-		err = errors.New("获取SnsapiBase出错, code:" + s.Errcode + ", msg：" + s.Errmsg)
-	} else {
-		o.AccessToken = s.AccessToken
-		o.Openid = s.Openid
+	//是否有效
+	if !o.isTokenExpired() {
+		o.token()
 	}
 
-	fmt.Println(err)
-	return s, err
-}
+	url := HOST + USERINFO_URL
+	url = strings.Replace(url, "{{CODE}}", o.Code, -1)
+	url = strings.Replace(url, "{{OPENID}}", o.Openid, -1)
+	url = strings.Replace(url, "{{TOKEN}}", o.AccessToken, -1)
 
-//获取UserInfo
-func (o *Oauth) SnsapiUserInfo() (SnsapiUserInfo, error) {
-	var err error
-	// o.RefreshTokenAction()
-	fmt.Println("access_token:", o.AccessToken)
-	var info SnsapiUserInfo
-	json.Unmarshal(body, &info)
-
-	return info, err
-}
-
-// 验证AccessToken是否有效
-func (o *Oauth) RefreshTokenAction() bool {
-
-	isExpires := false
-
-	url := Url(TOKEN_REFRESH_URL)
-	url = strings.Replace(url, "{{OPENID}}", GetConfig().WxAppId, -1)
-
-	type AccessToken struct {
-		Errcode string `json:"errcode"`
-		Errmsg  string `json:"errmsg"`
+	var resp UserInfo
+	if err := NewRequest().Get(url).JsonResp(&resp); err != nil {
+		panic(err)
 	}
 
-	resp, err := http.Get(url)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		fmt.Println(err)
+	if resp.Errcode != "" {
+		return resp, errors.New("获取SnsapiBase出错, code:" + resp.Errcode + ", msg：" + resp.Errmsg)
 	}
 
-	var t AccessToken
-	json.Unmarshal(body, &t)
-
-	if t.Errcode != "0" || t.Errmsg != "ok" {
-		isExpires = true
-		url := "https://api.weixin.qq.com/sns/oauth2/refresh_token?"
-		url += "appid=" + o.Openid + "&grant_type=refresh_token&refresh_token=" + o.RefreshToken
-		resp, err := http.Get(url)
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		var s SnsapiBase
-		json.Unmarshal(body, &s)
-
-		if s.Errcode != "" {
-			err := errors.New("获取SnsapiBase出错, code:" + s.Errcode + ", msg：" + s.Errmsg)
-			fmt.Println(err)
-		} else {
-			o.AccessToken = s.AccessToken
-			o.RefreshToken = s.RefreshToken
-		}
-	}
-	return isExpires
+	return resp, nil
 }
