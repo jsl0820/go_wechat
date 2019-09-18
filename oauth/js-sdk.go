@@ -1,8 +1,7 @@
 package oauth
 
 import (
-	"fmt"
-	"log"
+	"errors"
 	"time"
 
 	. "github.com/jsl0820/wechat"
@@ -10,104 +9,63 @@ import (
 
 const TICKET_URL = "/cgi-bin/ticket/getticket?type=jsapi&access_token={{TOKEN}}"
 
-type TicketResp struct {
-	ErrCode   string `json:"errcode"`
-	ErrMsg    string `json:"errmsg"`
-	Ticket    string `json:"ticket"`
-	ExpiresIn int    `json:"expires_in"`
-}
+var ticketInstance = &Ticket{Expires: GetConfig().Expires}
 
 type Ticket struct {
-	expires uint
-	Resp    TicketResp
+	Expires uint
+	Ticket  string
 }
 
-var ticketInstance = &Ticket{expires: GetConfig().Expires}
-
-//刷新
-func (t *Ticket) Refresh() (TicketResp, error) {
-	tk, err := t.Get()
-	if err != nil {
-		fmt.Println(err)
-	}
-
+//刷新票据
+func (ti *Ticket) ticketRefresh() {
 	url := Url(TICKET_URL)
-	var s TicketResp
-	err = NewRequest().Get(url).JsonResp(&s)
-
-	if err != nil {
-		return s, err
+	var resp map[string]string
+	if err := NewRequest().Get(url).JsonResp(&resp); err != nil {
+		panic(err)
 	}
 
-	return s, nil
-}
-
-//获取票据
-func (t *Ticket) Get() (string, error) {
-	if t.Resp == (TicketResp{}) {
-		resp, err := t.Refresh()
-		if err != nil {
-			log.Println(err)
-			return "", err
-		}
-
-		t.Resp = resp
+	if resp["errcode"] != "0" {
+		panic(errors.New("errmsg:" + resp["errmsg"]))
 	}
 
-	return t.Resp.Ticket, nil
+	ti.Ticket = resp["ticket"]
 }
 
 //定期清理
-func (t *Ticket) Clear() {
-	dur := time.Duration(t.expires) * time.Second
+func (ti *Ticket) Clear() {
+	d := time.Duration(ti.Expires) * time.Second
 	for {
-		<-time.After(dur)
-		if t.Resp != (TicketResp{}) {
-			t.Resp = TicketResp{}
+		<-time.After(d)
+		if ti.Ticket != "" {
+			ti.Ticket = ""
 		}
 	}
 }
 
-type JsConfigConfig struct {
-	TimeStamp string `json:"timesamp"`
-	NonceStr  string `json:"noncestr"`
-	Signature string `json:"signature"`
-}
-
-func NewJsSdk(url string) *JsSdk {
-	config := &JsConfigConfig{}
-	return &JsSdk{SdkConfig: config}
-}
-
-type JsSdk struct {
-	Url       string
-	config    map[string]string
-	SdkConfig *JsConfigConfig
-}
-
-func (sdk *JsSdk) Get() map[string]string {
-	tamp := StampString()
-	nonceStr := NonceStringGenerator(32)
-	ticket, err := ticketInstance.Get()
-	if err != nil {
-		log.Println(err)
+//获取
+func (ti *Ticket) GetTicket() string {
+	if ti.Ticket == "" {
+		ti.ticketRefresh()
 	}
 
-	sdk.config = map[string]string{
-		"url":          sdk.Url,
-		"noncestr":     nonceStr,
-		"timestamp":    tamp,
-		"jsapi_ticket": ticket,
-	}
+	return ti.Ticket
+}
 
-	sign := StringSign(sdk.config)
-	nature := Sha1Sign(sign)
+//js-sdk配置
+func SdkConfig(url string) map[string]string {
+	m := make(map[string]string)
+	sign := make(map[string]string)
 
-	return map[string]string{
-		"timesamp":  tamp,
-		"noncestr":  nonceStr,
-		"signature": nature,
-	}
+	m["url"] = url
+	m["timestamp"] = StampString()
+	m["noncestr"] = NonceStringGenerator(32)
+	m["jsapi_ticket"] = ticketInstance.GetTicket()
+
+	sign["timestamp"] = m["timestamp"]
+	sign["noncestr"] = m["noncestr"]
+	sign["signature"] = Sha1Sign(StringSign(m))
+
+	return sign
 }
 
 func init() {

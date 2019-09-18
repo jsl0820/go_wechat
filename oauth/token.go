@@ -25,32 +25,43 @@ type TokenResp struct {
 }
 
 type Token struct {
-	Expires     int
-	AccessToken TokenResp
+	Expires     uint
+	AccessToken string
 }
 
+var TokenInstance = &Token{Expires: GetConfig().Expires}
+
 //刷新token
-func (t *Token) Refresh() error {
-	url := TOKEN_URL
+func (t *Token) Refresh() {
+	url := HOST + TOKEN_URL
 	url = strings.Replace(url, "{{APPID}}", GetConfig().WxAppId, -1)
 	url = strings.Replace(url, "{{APP_SECRITE}}", GetConfig().WxAppSecret, -1)
-	url = HOST + url
-	if err := NewRequest().Get(url).JsonResp(&t.AccessToken); err != nil {
+
+	var resp map[string]string
+	err := NewRequest().Get(url).JsonResp(&resp)
+	if err != nil {
 		panic(err)
-		return err
+	}
+	
+	if resp["errmsg"] == {
+		
 	}
 
-	return nil
+	t.AccessToken = 
 }
 
 //获取token
 func (t *Token) Get() (string, error) {
-	if t.AccessToken == (AccessToken{}) {
+	if t.AccessToken == "" {
+		t.Refresh()
+	}
+
+	if t.AccessToken == (TokenResp{}) {
 		if err := t.Refresh(); err != nil {
 			return "", err
 		}
 
-		switch t.At.Errcode {
+		switch t.AccessToken.Errcode {
 		case -1:
 			return "", errors.New(TOKEN_ERROR_1)
 		case 40001:
@@ -60,11 +71,16 @@ func (t *Token) Get() (string, error) {
 		case 40164:
 			return "", errors.New(TOKEN_ERROR_4)
 		default:
-			return t.At.AccessToken, nil
+			return t.AccessToken.AccessToken, nil
 		}
 	}
 
-	return t.At.AccessToken, nil
+	return t.AccessToken.AccessToken, nil
+}
+
+//获取token
+func GetToken() (string, error) {
+	return TokenInstance.Get()
 }
 
 //定期清空 时间间隔为 TokenGcTime
@@ -72,8 +88,8 @@ func (t *Token) clean() {
 	duration := time.Duration(t.Expires) * time.Second
 	for {
 		<-time.After(duration)
-		if t.At != (AccessToken{}) {
-			t.At = AccessToken{}
+		if t.AccessToken != (TokenResp{}) {
+			t.AccessToken = TokenResp{}
 		}
 	}
 }
