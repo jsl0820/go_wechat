@@ -1,6 +1,8 @@
 package oauth
 
 import (
+	"log"
+
 	. "github.com/jsl0820/wechat"
 )
 
@@ -21,6 +23,7 @@ func (ips *IPResp) List() ([]string, error) {
 	url := Url(CALLBACK_IPS)
 	err := NewRequest().Get(url).JsonResp(ips)
 	if err != nil {
+		log.Println("测试", url)
 		return nil, err
 	}
 

@@ -19,16 +19,23 @@ type Ticket struct {
 //刷新票据
 func (ti *Ticket) ticketRefresh() {
 	url := Url(TICKET_URL)
-	var resp map[string]string
+	type Resp struct {
+		Errcode   int
+		Errmsg    string
+		Ticket    string
+		ExpiresIn uint
+	}
+
+	var resp Resp
 	if err := NewRequest().Get(url).JsonResp(&resp); err != nil {
 		panic(err)
 	}
 
-	if resp["errcode"] != "0" {
-		panic(errors.New("errmsg:" + resp["errmsg"]))
+	if resp.Errcode != 0 {
+		panic(errors.New("errmsg:" + resp.Errmsg))
 	}
 
-	ti.Ticket = resp["ticket"]
+	ti.Ticket = resp.Ticket
 }
 
 //定期清理
