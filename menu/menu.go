@@ -2,35 +2,27 @@ package menu
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
+
+	. "github.com/jsl0820/wechat"
+	"github.com/jsl0820/wechat/oauth"
 )
+
+const MENU_DEL = "/cgi-bin/menu/delete?access_token=ACCESS_TOKEN"
+const MENU_CREATE = "/cgi-bin/menu/create?access_token={{TOKEN}}"
+const MENU_CURRNT = "/cgi-bin/get_current_selfmenu_info?access_token={{TOKEN}}"
+
+type Item map[string]interface{}
 
 type MenueResp struct {
 	ErrCode int    `json:"errcode"`
 	ErrMsg  string `json:"errmsg"`
 }
 
-type Menu struct {
-}
-
 //查询
-func (m *Menu) Query(cat int) (string, error) {
-	t, err := token.Get()
-	if err != nil {
-		return "", err
-	}
-
-	var url string
-	if cat == 0 {
-		url = HOST + "/get_current_selfmenu_info?access_token=" + t
-	}
-	if cat == 1 {
-		url = HOST + "/get_current_selfmenu_info?access_token=" + t
-	}
-
+func Current() (string, error) {
+	url := oauth.Url(MENU_CURRNT)
 	resp, err := NewRequest().Get(url).String()
-
 	if err != nil {
 		return "", err
 	}
@@ -39,68 +31,43 @@ func (m *Menu) Query(cat int) (string, error) {
 }
 
 //创建
-func (m *Menu) Create(menu map[string]interface{}) error {
-	jsonStr, err := json.Marshal(menu)
+func Create(menu Item) bool {
+	body, err := json.Marshal(menu)
 	if err != nil {
 		log.Println(err)
 	}
 
-	t, err := token.Get()
-	if err != nil {
-		return err
-	}
-
-	url := HOST + "/cgi-bin/menu/create?access_token=" + t
+	url := oauth.Url(MENU_CREATE)
 	var resp MenueResp
-	err = NewRequest().Body(jsonStr).Post(url).JsonResp(&resp)
-	if err != nil {
-		return err
+	request := NewRequest().Body(body).Post(url)
+	request.ContentType("application/json")
+	if err := request.JsonResp(&resp); err != nil {
+		log.Println(err)
+		return false
 	}
 
 	if resp.ErrCode != 0 {
-		return errors.New("发生错误" + resp.ErrMsg)
+		log.Println(resp.ErrMsg)
+		return false
 	}
 
-	return nil
-}
-
-//获取菜单
-func (m *Menu) Get(cat int) (string, error) {
-	t, err := token.Get()
-	if err != nil {
-		return "", err
-	}
-
-	var url string
-	if cat == 1 {
-		url = HOST + "/cgi-bin/menu/get?access_token=" + t
-	}
-	if cat == 0 {
-		url = HOST + "/cgi-bin/menu/addconditional?access_token=" + t
-	}
-
-	resp, err := NewRequest().Get(url).String()
-	if err != nil {
-		return "", err
-	}
-
-	return resp, nil
+	return true
 }
 
 //删除全部菜单
-func (m *Menu) Del() (bool, error) {
-	t, err := token.Get()
-	if err != nil {
-		return false, err
-	}
-
-	url := HOST + "/cgi-bin/menu/delete?access_token=" + t
+func Del() bool {
+	url := oauth.Url(MENU_DEL)
 	var resp MenueResp
-	err = NewRequest().Get(url).JsonResp(&resp)
-
+	err := NewRequest().Get(url).JsonResp(&resp)
 	if err != nil {
-		return false, err
+		log.Println(err)
+		return false
 	}
 
-	return false, nil
+	if resp.ErrCode != 0 {
+		log.Println(resp.ErrMsg)
+		return false
+	}
+
+	return true
 }

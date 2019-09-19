@@ -85,5 +85,5 @@ func Url(url string) string {
 }
 
 func init() {
-	go TokenInstance.clean()
+	// go TokenInstance.clean()
 }
