@@ -13,17 +13,21 @@ func TestConfig(t *testing.T) {
 		WxAppSecret: "148ee9063222674ef03e4c21776e02cd",
 	}
 	WxConfig(config)
-	log.Println(Wxconfig)
+	t.Log(Wxconfig)
 }
 
 func TestToken(t *testing.T) {
-	// TestConfig(t)
+	TestConfig(t)
 	token, err := GetToken()
 	if err != nil {
-		log.Println(err)
+		t.Log(err)
 	}
 
-	log.Println("从服务器获得到的", token)
+	t.Log("从服务器获得到的", token)
+
+	if token == "" {
+		t.Error("error")
+	}
 }
 
 func TestUrl(t *testing.T) {
@@ -33,22 +37,24 @@ func TestUrl(t *testing.T) {
 }
 
 func TestIp(t *testing.T) {
+	TestConfig(t)
 	if list, err := IP().List(); err != nil {
-		log.Println(err)
+		t.Log(err)
 	} else {
-		log.Println(list)
+		t.Log(list)
 	}
 }
 
 func TestHasIp(t *testing.T) {
-	// TestConfig(t)
+	TestConfig(t)
 	ip := "223.166.222.100"
 	has := IP().Has(ip)
 	t.Log("IP:", has)
 }
 
 func TestSdkConfig(t *testing.T) {
+	TestConfig(t)
 	url := "www.test.com"
 	sign := SdkConfig(url)
-	log.Println(sign)
+	t.Log(sign)
 }
