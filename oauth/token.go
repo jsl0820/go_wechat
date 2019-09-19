@@ -1,7 +1,6 @@
 package oauth
 
 import (
-	"errors"
 	"strings"
 	"time"
 
@@ -37,17 +36,17 @@ func (t *Token) Refresh() {
 	url = strings.Replace(url, "{{APPID}}", GetConfig().WxAppId, -1)
 	url = strings.Replace(url, "{{APP_SECRITE}}", GetConfig().WxAppSecret, -1)
 
-	var resp map[string]string
+	var resp TokenResp
 	err := NewRequest().Get(url).JsonResp(&resp)
 	if err != nil {
 		panic(err)
 	}
-	
-	if resp["errmsg"] == {
-		
+
+	if resp.Errcode != 0 {
+		panic(resp.Errmsg)
 	}
 
-	t.AccessToken = 
+	t.AccessToken = resp.AccessToken
 }
 
 //获取token
@@ -56,26 +55,7 @@ func (t *Token) Get() (string, error) {
 		t.Refresh()
 	}
 
-	if t.AccessToken == (TokenResp{}) {
-		if err := t.Refresh(); err != nil {
-			return "", err
-		}
-
-		switch t.AccessToken.Errcode {
-		case -1:
-			return "", errors.New(TOKEN_ERROR_1)
-		case 40001:
-			return "", errors.New(TOKEN_ERROR_2)
-		case 40002:
-			return "", errors.New(TOKEN_ERROR_3)
-		case 40164:
-			return "", errors.New(TOKEN_ERROR_4)
-		default:
-			return t.AccessToken.AccessToken, nil
-		}
-	}
-
-	return t.AccessToken.AccessToken, nil
+	return t.AccessToken, nil
 }
 
 //获取token
@@ -88,8 +68,8 @@ func (t *Token) clean() {
 	duration := time.Duration(t.Expires) * time.Second
 	for {
 		<-time.After(duration)
-		if t.AccessToken != (TokenResp{}) {
-			t.AccessToken = TokenResp{}
+		if t.AccessToken != "" {
+			t.AccessToken = ""
 		}
 	}
 }
@@ -101,7 +81,7 @@ func Url(url string) string {
 		panic(err)
 	}
 
-	return strings.Replace(url, "{{TOKEN}}", token, -1)
+	return HOST + strings.Replace(url, "{{TOKEN}}", token, -1)
 }
 
 func init() {
