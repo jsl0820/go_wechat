@@ -8,7 +8,7 @@ import (
 	"github.com/jsl0820/wechat/oauth"
 )
 
-const MENU_DEL = "/cgi-bin/menu/delete?access_token=ACCESS_TOKEN"
+const MENU_DEL = "/cgi-bin/menu/delete?access_token={{TOKEN}}"
 const MENU_CREATE = "/cgi-bin/menu/create?access_token={{TOKEN}}"
 const MENU_CURRNT = "/cgi-bin/get_current_selfmenu_info?access_token={{TOKEN}}"
 
@@ -17,6 +17,7 @@ type Item map[string]interface{}
 type MenueResp struct {
 	ErrCode int    `json:"errcode"`
 	ErrMsg  string `json:"errmsg"`
+	Menuid  uint
 }
 
 //查询
@@ -39,9 +40,9 @@ func Create(menu Item) bool {
 
 	url := oauth.Url(MENU_CREATE)
 	var resp MenueResp
-	request := NewRequest().Body(body).Post(url)
+	request := NewRequest().Body(body)
 	request.ContentType("application/json")
-	if err := request.JsonResp(&resp); err != nil {
+	if err := request.Post(url).JsonResp(&resp); err != nil {
 		log.Println(err)
 		return false
 	}
@@ -57,6 +58,7 @@ func Create(menu Item) bool {
 //删除全部菜单
 func Del() bool {
 	url := oauth.Url(MENU_DEL)
+
 	var resp MenueResp
 	err := NewRequest().Get(url).JsonResp(&resp)
 	if err != nil {

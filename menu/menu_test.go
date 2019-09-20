@@ -1,14 +1,10 @@
 package menu
 
 import (
-	"bytes"
 	"encoding/json"
-	"log"
-	"net/http"
 	"testing"
 
 	. "github.com/jsl0820/wechat"
-	"github.com/jsl0820/wechat/oauth"
 )
 
 func init() {
@@ -38,7 +34,7 @@ func TestCreate(t *testing.T) {
 				"key":  "V1001_TODAY_MUSIC",
 			},
 			Item{
-				"name": "菜单",
+				"name": "测试菜单",
 				"sub_button": []Item{
 					Item{
 						"type": "view",
@@ -59,12 +55,46 @@ func TestCreate(t *testing.T) {
 	t.Log(string(b))
 	t.Log(err)
 
-	// isCreated := Create(mune)
-	// t.Log(isCreated)
+	isCreated := Create(mune)
+	t.Log(isCreated)
+}
 
-	url := oauth.Url(MENU_CREATE)
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(b))
+func TestDel(t *testing.T) {
+	isDeled := Del()
+	t.Log("是否删除", isDeled)
+}
 
-	log.Println(resp)
-	log.Println(err)
+func TestCreateCondMenu(t *testing.T) {
+
+	mune := Item{
+		"button": []Item{
+			Item{
+				"type": "click",
+				"name": "今日歌曲",
+				"key":  "V1001_TODAY_MUSIC",
+			},
+			Item{
+				"name": "测试菜单",
+				"sub_button": []Item{
+					Item{
+						"type": "view",
+						"name": "搜索",
+						"url":  "http://www.soso.com/",
+					},
+					Item{
+						"type": "click",
+						"name": "赞一下我们",
+						"key":  "V1001_GOOD",
+					},
+				},
+			},
+		},
+		"matchrule": Item{
+			"country": "中国",
+		},
+	}
+
+	menuid, created := CreateCondMenu(mune)
+	t.Log(menuid)
+	t.Log(created)
 }
