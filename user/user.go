@@ -1,4 +1,4 @@
-package member
+package user
 
 import (
 	// "fmt"
@@ -12,7 +12,7 @@ type Resp struct {
 	ErrMsg  string `json:"errmsg"`
 }
 
-type User struct {
+type Info struct {
 	Subscribe      int      `json:"subscribe"`
 	OpenId         string   `json:"openid"`
 	NickName       string   `json:"nickname"`
@@ -30,6 +30,22 @@ type User struct {
 	SubscribeScene string   `json:"subscribe_scene"`
 	QrScenetr      string   `json:"qr_scene_str"`
 }
+
+type User struct {
+
+}
+
+
+//
+func(u *User) Find() *Info {
+
+}
+
+
+func(u *User) Remark() bool {
+
+}
+
 
 type BlackList map[string][]string
 
