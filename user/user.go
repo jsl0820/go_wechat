@@ -1,18 +1,29 @@
 package user
 
 import (
-	// "fmt"
 	"encoding/json"
-	// "strings"
-	"errors"
+	"github.com/jsl0820/wechat/oauth"
+	"log"
+	"strings"
+
+	. "github.com/jsl0820/wechat"
 )
+
+
+const USER_LIST_URL  = "/cgi-bin/user/get?access_token={{TOKEN}}&next_openid=NEXT_OPENID"
+const USER_REMARK_URL  = "/cgi-bin/user/info/updateremark?access_token={{TOKEN}}"
+const USER_INFO_URL  = "/cgi-bin/user/info?access_token={{TOKEN}}&openid=OPENID&lang=zh_CN"
+const USER_PACKAGE_URL = "/cgi-bin/user/info/batchget?access_token={{TOKEN}}"
+const USER_BLACK_LIST  = "/cgi-bin/tags/members/getblacklist?access_token={{TOKEN}}"
+const USER_BLACK  = "/cgi-bin/tags/members/batchblacklist?access_token={{TOKEN}}"
+const USER_BLACK_CANCEL  = "/cgi-bin/tags/members/batchunblacklist?access_token={{TOKEN}}"
 
 type Resp struct {
 	ErrCode int    `json:"errcode"`
 	ErrMsg  string `json:"errmsg"`
 }
 
-type Info struct {
+type Information struct {
 	Subscribe      int      `json:"subscribe"`
 	OpenId         string   `json:"openid"`
 	NickName       string   `json:"nickname"`
@@ -29,174 +40,186 @@ type Info struct {
 	TagidList      []string `json:"tagid_list"`
 	SubscribeScene string   `json:"subscribe_scene"`
 	QrScenetr      string   `json:"qr_scene_str"`
+	Resp
 }
 
-type User struct {
+type User struct {}
 
+
+type ListResp struct {
+	Total uint64
+	Count uint64
+	Data map[string][]string
+	NextOpenid string
+	Resp
 }
 
+//关注着列表
+func(u *User) List(id string) (*ListResp, error) {
+	url := oauth.Url(USER_LIST_URL)
+	url = strings.Replace(url, "NEXT_OPENID", id, -1)
+	var resp *ListResp
+	err := NewRequest().Get(url).JsonResp(resp)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-//
-func(u *User) Find() *Info {
-
+	return resp, nil
 }
-
-
-func(u *User) Remark() bool {
-
-}
-
-
-type BlackList map[string][]string
 
 //黑名单
-type BlackListResp struct {
-	ErrCode    int       `json:"errcode"`
-	ErrMsg     string    `json:"errmsg"`
-	Total      int       `json:"total"`
-	Count      int       `json:"count"`
-	Data       BlackList `json:data`
-	NextOpenid string    `json:"next_openid"`
-}
-
-type UserList struct {
-	List []map[string]string `json:"user_list"`
-}
-
-type UserListResp struct {
-	List []User `json:"user_info_list"`
-}
-
-func NewUsers() *Users {
-	t, _ := token.Get()
-	return &Users{token: t}
-}
-
-//用户
-type Users struct {
-	token string
-}
-
-//用户备注
-func (u *Users) Remark(openid, remark string) bool {
-	url := HOST + "/cgi-bin/user/info/updateremark?access_token=" + u.token
-	body := `{ openid:{{.openid}}, remark:{{.remark}} }`
-
-	var resp UserResp
-	err := NewRequest().Body(body).Get(url).JsonResp(&resp)
+func BlackList(id string) (*ListResp, error){
+	url := oauth.Url(USER_BLACK_LIST)
+	url = strings.Replace(url, "NEXT_OPENID", id, -1)
+	var resp *ListResp
+	err := NewRequest().Get(url).JsonResp(resp)
 	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+
+//设置用户备注名
+func(u *User) Remark(id, mark string) bool {
+	data := make(map[string]string)
+	data["openid"] = id
+	data["remark"] = mark
+	url := oauth.Url(USER_REMARK_URL)
+	body, err := json.Marshal(data)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	var resp *Resp
+	request := NewRequest().Body(body)
+	request.ContentType("application/json")
+	err = request.Post(url).JsonResp(resp)
+	if err != nil {
+		log.Println(err)
 		return false
 	}
 
 	if resp.ErrCode != 0 {
+		log.Println(resp.ErrMsg)
 		return false
 	}
 
 	return true
 }
 
-//获取用户信息
-func (u *Users) Query(openid string, lang string) (User, error) {
-	url := HOST + "/cgi-bin/user/info?access_token="
-	url += u.token + "&openid=" + openid + "&lang=" + lang
-
-	var user User
-	err := NewRequest().Get(url).JsonResp(&user)
-	if err != nil {
-		return user, err
-	}
-	return user, nil
-}
-
-// //批量获取用户信息
-func (u *Users) QueryAll(ids []map[string]string) (*[]User, error) {
-	userQuery := &UserList{
-		List: ids,
-	}
-
-	url := HOST + "/cgi-bin/user/info/batchget?access_token=" + u.token
-	b, err := json.Marshal(userQuery)
+//会员信息
+func (u *User)  Info(id string) (*Information, error) {
+	url := oauth.Url(USER_INFO_URL)
+	url = strings.Replace(url, "OPENID", id, -1)
+	var resp *Information
+	err := NewRequest().Get(url).JsonResp(resp)
 	if err != nil {
 		return nil, err
 	}
 
-	var userList UserListResp
-	err = NewRequest().Body(b).Get(url).JsonResp(&userList)
+	return resp, nil
+}
+
+//批量获取用户信息
+func  (u *User) InfoList(ids ...string) (*map[string][]Information, error){
+	data := make(map[string]interface{})
+	var users  []interface{}
+	for i:= 0; i < len(ids); i++ {
+		users = append(users, map[string]string{
+			"lang":"zh_CN",
+			"openid" : ids[i],
+		})
+	}
+
+	data["user_list"] = users
+	body, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return &userList.List, nil
-}
+	log.Println("请求数据",string(body))
 
-// //获取用户地理位置
-// func (u *Users)Location(openid, lang string ){
-// 	t, _ := token.Get()
-// 	url := HOST +"/cgi-bin/user/info?access_token="+ t +"&openid="+ openid +"&lang=" + lang
-
-// }
-
-// //拉黑用户
-// func (u *Users)Block(openids ...string)(bool, error){
-// 	t, _ := token.Get()
-// 	url := HOST + "/cgi-bin/tags/members/batchblacklist?access_token=" + t
-
-// 	if len(openids...) > 20 {
-// 		return false, errors.New("数量多，一次最多能操作20个用户")
-// 	}
-
-// 	users := strings.Join(openids, ",")
-// 	data := `{"openid_list:[" `+ users +`]}`
-
-// 	var resp UserResp
-// 	err := NewRequest().Body(data).JsonResp(&resp)
-// 	if err != nil {
-// 		return false , err
-// 	}
-
-// 	if resp.ErrCode == 0 {
-// 		return true, nil
-// 	}
-
-// 	return false, errors.New("操作失败！Error:" + resp.ErrMsg)
-// }
-
-// //拉黑用户
-// func (u *Users)CancelBlock(openids ...string)(bool, error){
-// 	t, _ := token.Get()
-// 	url := HOST + "/cgi-bin/tags/members/batchunblacklist?access_token=" + t
-// 	if len(openids...) > 20 {
-// 		return false, errors.New("数量多，一次最多能操作20个用户")
-// 	}
-
-// 	users := strings.Join(openids, ",")
-// 	data := `{"openid_list:[" `+ users +`]}`
-
-// 	var resp UserResp
-// 	err := NewRequest().Body(data).JsonResp(&resp)
-// 	if err != nil {
-// 		return false , err
-// 	}
-
-// 	if resp.ErrCode == 0 {
-// 		return true, nil
-// 	}
-
-// 	return false, errors.New("操作失败！Error:" + resp.ErrMsg)
-// }
-
-//获取黑名单
-func (u *Users) BlackList(openid string) (BlackListResp, error) {
-
-	var resp BlackListResp
-	err := NewRequest().JsonResp(&resp)
+	url := oauth.Url(USER_PACKAGE_URL)
+	var resp *map[string][]Information
+	request := NewRequest().Body(body)
+	request.ContentType("application/json")
+	err = request.Post(url).JsonResp(resp)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
-	if resp.ErrCode == 0 {
-		return resp, nil
-	}
-
-	return resp, errors.New("操作失败！Error:" + resp.ErrMsg)
+	return resp, nil
 }
+
+//拉黑
+func (u *User)Block(ids ...string) bool {
+	if len(ids) > 20 {
+		log.Println("一次只能拉黑20个")
+		return false
+	}
+
+	url := oauth.Url(USER_BLACK)
+	data := make(map[string][]string)
+	data["openid_list"] = ids
+	body, e := json.Marshal(data)
+	if e != nil {
+		log.Println(e)
+		return false
+	}
+
+	var resp *Resp
+	request := NewRequest().Body(body)
+	request.ContentType("application/json")
+	err := request.Post(url).JsonResp(resp)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	if resp.ErrCode != 0 {
+		log.Println(resp.ErrMsg)
+		return false
+	}
+
+	return true
+}
+
+
+//拉黑
+func (u *User)BlockCancel(ids ...string) bool {
+	if len(ids) > 20 {
+		log.Println("一次只能拉黑20个")
+		return false
+	}
+
+	url := oauth.Url(USER_BLACK_CANCEL)
+	data := make(map[string][]string)
+	data["openid_list"] = ids
+	body, e := json.Marshal(data)
+	if e != nil {
+		log.Println(e)
+		return false
+	}
+
+	var resp *Resp
+	request := NewRequest().Body(body)
+	request.ContentType("application/json")
+	err := request.Post(url).JsonResp(resp)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	if resp.ErrCode != 0 {
+		log.Println(resp.ErrMsg)
+		return false
+	}
+
+	return true
+}
+

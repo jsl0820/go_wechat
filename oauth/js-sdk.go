@@ -76,5 +76,5 @@ func SdkConfig(url string) map[string]string {
 }
 
 func init() {
-	// go ticketInstance.Clear()
+	go ticketInstance.Clear()
 }

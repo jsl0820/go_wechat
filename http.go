@@ -48,11 +48,9 @@ func (req *HttpRequest) ContentType(contentType string) *HttpRequest {
 func (req *HttpRequest) Body(data interface{}) *HttpRequest {
 	switch t := data.(type) {
 	case string:
-		bf := bytes.NewBufferString(t)
-		req.body = ioutil.NopCloser(bf)
+		req.body = bytes.NewBufferString(t)
 	case []byte:
-		bf := bytes.NewBuffer(t)
-		req.body = ioutil.NopCloser(bf)
+		req.body = bytes.NewBuffer(t)
 	default:
 		panic("参数不支持该类型!")
 	}
@@ -71,15 +69,12 @@ func (req *HttpRequest) Get(uri string) *HttpRequest {
 }
 
 func (req *HttpRequest) Post(uri string) *HttpRequest {
-	log.Println("POST", "运行到这里")
-	req.contentType = "application/json"
-	resp, err := http.Post(uri, "application/json", req.body)
-
+	resp, err := http.Post(uri, req.contentType, req.body)
 	if err != nil {
 		log.Println(err)
-		req.resp = resp
 	}
-	log.Println("POST", "运行到这里2")
+
+	req.resp = resp
 	return req
 }
 
@@ -130,7 +125,6 @@ func (r *HttpRequest) JsonResp(data interface{}) (err error) {
 		log.Println(err)
 	}
 
-	log.Println("返回数据", string(b))
 	return json.Unmarshal(b, data)
 }
 
