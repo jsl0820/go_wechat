@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/jsl0820/wechat/oauth"
 	"log"
 	"strings"
@@ -9,16 +10,15 @@ import (
 	. "github.com/jsl0820/wechat"
 )
 
-
-const USER_LIST_URL  = "/cgi-bin/user/get?access_token={{TOKEN}}&next_openid=NEXT_OPENID"
-const USER_REMARK_URL  = "/cgi-bin/user/info/updateremark?access_token={{TOKEN}}"
-const USER_INFO_URL  = "/cgi-bin/user/info?access_token={{TOKEN}}&openid=OPENID&lang=zh_CN"
+const USER_LIST_URL = "/cgi-bin/user/get?access_token={{TOKEN}}&next_openid=NEXT_OPENID"
+const USER_REMARK_URL = "/cgi-bin/user/info/updateremark?access_token={{TOKEN}}"
+const USER_INFO_URL = "/cgi-bin/user/info?access_token={{TOKEN}}&openid=OPENID&lang=zh_CN"
 const USER_PACKAGE_URL = "/cgi-bin/user/info/batchget?access_token={{TOKEN}}"
-const USER_BLACK_LIST  = "/cgi-bin/tags/members/getblacklist?access_token={{TOKEN}}"
-const USER_BLACK  = "/cgi-bin/tags/members/batchblacklist?access_token={{TOKEN}}"
-const USER_BLACK_CANCEL  = "/cgi-bin/tags/members/batchunblacklist?access_token={{TOKEN}}"
+const USER_BLACK_LIST = "/cgi-bin/tags/members/getblacklist?access_token={{TOKEN}}"
+const USER_BLACK = "/cgi-bin/tags/members/batchblacklist?access_token={{TOKEN}}"
+const USER_BLACK_CANCEL = "/cgi-bin/tags/members/batchunblacklist?access_token={{TOKEN}}"
 
-type Resp struct {
+type UserResp struct {
 	ErrCode int    `json:"errcode"`
 	ErrMsg  string `json:"errmsg"`
 }
@@ -40,51 +40,57 @@ type Information struct {
 	TagidList      []string `json:"tagid_list"`
 	SubscribeScene string   `json:"subscribe_scene"`
 	QrScenetr      string   `json:"qr_scene_str"`
-	Resp
+	ErrCode        int      `json:"errcode"`
+	ErrMsg         string   `json:"errmsg"`
 }
 
-type User struct {}
-
+type User struct{}
 
 type ListResp struct {
-	Total uint64
-	Count uint64
-	Data map[string][]string
+	Total      uint64
+	Count      uint64
+	Data       map[string][]string
 	NextOpenid string
-	Resp
+	ErrCode    int    `json:"errcode"`
+	ErrMsg     string `json:"errmsg"`
 }
 
 //关注着列表
-func(u *User) List(id string) (*ListResp, error) {
+func (u *User) List(nestId string) (*ListResp, error) {
 	url := oauth.Url(USER_LIST_URL)
-	url = strings.Replace(url, "NEXT_OPENID", id, -1)
-	var resp *ListResp
-	err := NewRequest().Get(url).JsonResp(resp)
+	url = strings.Replace(url, "NEXT_OPENID", nestId, -1)
+	var resp ListResp
+	err := NewRequest().Get(url).JsonResp(&resp)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	return resp, nil
+	if resp.ErrCode != 0 {
+		return nil, errors.New(resp.ErrMsg)
+	}
+
+	return &resp, nil
 }
 
 //黑名单
-func BlackList(id string) (*ListResp, error){
+func (u *User) BlackList(id string) (*ListResp, error) {
 	url := oauth.Url(USER_BLACK_LIST)
-	url = strings.Replace(url, "NEXT_OPENID", id, -1)
-	var resp *ListResp
-	err := NewRequest().Get(url).JsonResp(resp)
+	var resp ListResp
+	body := strings.Replace(`{"begin_openid":"OPENID"}`, "OPENID", id, -1)
+	request := NewRequest().Body(body)
+	request.ContentType("application/json")
+	err := request.Post(url).JsonResp(&resp)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	return resp, nil
+	return &resp, nil
 }
 
-
 //设置用户备注名
-func(u *User) Remark(id, mark string) bool {
+func (u *User) Remark(id, mark string) bool {
 	data := make(map[string]string)
 	data["openid"] = id
 	data["remark"] = mark
@@ -95,10 +101,10 @@ func(u *User) Remark(id, mark string) bool {
 		return false
 	}
 
-	var resp *Resp
+	var resp UserResp
 	request := NewRequest().Body(body)
 	request.ContentType("application/json")
-	err = request.Post(url).JsonResp(resp)
+	err = request.Post(url).JsonResp(&resp)
 	if err != nil {
 		log.Println(err)
 		return false
@@ -113,26 +119,32 @@ func(u *User) Remark(id, mark string) bool {
 }
 
 //会员信息
-func (u *User)  Info(id string) (*Information, error) {
+func (u *User) Info(id string) (*Information, error) {
 	url := oauth.Url(USER_INFO_URL)
 	url = strings.Replace(url, "OPENID", id, -1)
-	var resp *Information
-	err := NewRequest().Get(url).JsonResp(resp)
+	log.Println("请求", url)
+
+	var resp Information
+	err := NewRequest().Get(url).JsonResp(&resp)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return resp, nil
+	if resp.ErrCode != 0 {
+		return nil, errors.New(resp.ErrMsg)
+	}
+	return &resp, nil
 }
 
 //批量获取用户信息
-func  (u *User) InfoList(ids ...string) (*map[string][]Information, error){
+func (u *User) InfoList(ids ...string) (*map[string][]Information, error) {
 	data := make(map[string]interface{})
-	var users  []interface{}
-	for i:= 0; i < len(ids); i++ {
+	var users []interface{}
+	for i := 0; i < len(ids); i++ {
 		users = append(users, map[string]string{
-			"lang":"zh_CN",
-			"openid" : ids[i],
+			"lang":   "zh_CN",
+			"openid": ids[i],
 		})
 	}
 
@@ -141,8 +153,6 @@ func  (u *User) InfoList(ids ...string) (*map[string][]Information, error){
 	if err != nil {
 		return nil, err
 	}
-
-	log.Println("请求数据",string(body))
 
 	url := oauth.Url(USER_PACKAGE_URL)
 	var resp *map[string][]Information
@@ -157,7 +167,7 @@ func  (u *User) InfoList(ids ...string) (*map[string][]Information, error){
 }
 
 //拉黑
-func (u *User)Block(ids ...string) bool {
+func (u *User) Block(ids ...string) bool {
 	if len(ids) > 20 {
 		log.Println("一次只能拉黑20个")
 		return false
@@ -172,10 +182,10 @@ func (u *User)Block(ids ...string) bool {
 		return false
 	}
 
-	var resp *Resp
+	var resp UserResp
 	request := NewRequest().Body(body)
 	request.ContentType("application/json")
-	err := request.Post(url).JsonResp(resp)
+	err := request.Post(url).JsonResp(&resp)
 	if err != nil {
 		log.Println(err)
 		return false
@@ -189,9 +199,8 @@ func (u *User)Block(ids ...string) bool {
 	return true
 }
 
-
 //拉黑
-func (u *User)BlockCancel(ids ...string) bool {
+func (u *User) BlockCancel(ids ...string) bool {
 	if len(ids) > 20 {
 		log.Println("一次只能拉黑20个")
 		return false
@@ -206,10 +215,10 @@ func (u *User)BlockCancel(ids ...string) bool {
 		return false
 	}
 
-	var resp *Resp
+	var resp UserResp
 	request := NewRequest().Body(body)
 	request.ContentType("application/json")
-	err := request.Post(url).JsonResp(resp)
+	err := request.Post(url).JsonResp(&resp)
 	if err != nil {
 		log.Println(err)
 		return false
@@ -222,4 +231,3 @@ func (u *User)BlockCancel(ids ...string) bool {
 
 	return true
 }
-
