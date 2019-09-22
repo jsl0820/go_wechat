@@ -134,6 +134,7 @@ func (u *User) Info(id string) (*Information, error) {
 	if resp.ErrCode != 0 {
 		return nil, errors.New(resp.ErrMsg)
 	}
+
 	return &resp, nil
 }
 

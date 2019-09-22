@@ -1,83 +1,103 @@
-package wechat
+package Qrcode
 
-import(
-	// "fmt"
+import (
+	"encoding/json"
+	"errors"
+	. "github.com/jsl0820/wechat"
+	"github.com/jsl0820/wechat/oauth"
+	"log"
+	url2 "net/url"
+	"strings"
 )
 
-type QrcResp struct {
+const SHORT_URL = "/cgi-bin/shorturl?access_token={{TOKEN}}"
+const QRCODE_INFO = "/cgi-bin/showqrcode?ticket="
+const QRCODE_TICKET = "/cgi-bin/qrcode/create?access_token={{TOKEN}}"
+
+type CodeInfo struct {
 	Ticket        string `json:"ticket"`
-	ExpireSeconds string `json:"expire_seconds"`
+	ExpireSeconds uint64 `json:"expire_seconds"`
 	Url           string `json:"url"`
-	ErrCode 	  int	 `json:"errcode"`
+	ErrCode       int    `json:"errcode"`
 	ErrMsg        string `json:"errmsg"`
 	ShortUrl      string `json:"short_url"`
 }
 
+func New(p interface{}) *Qrcode {
+	b, e := json.Marshal(p)
+	if e != nil {
+		panic(e)
+	}
+
+	return &Qrcode{CodeJson: b}
+}
+
 type Qrcode struct {
-	Resp    QrcResp
-	JsonString string
+	CodeJson []byte
+	Info     CodeInfo
 }
 
-// 参数说明
-// 生成临时二维码
-// 1.带参数的二维码 
-// {"expire_seconds": 604800, "action_name": "QR_SCENE", "action_info": {"scene": {"scene_id": 123}}}
-// 2.字符串形式的二维码参数
-// {"expire_seconds": 604800, "action_name": "QR_STR_SCENE", "action_info": {"scene": {"scene_str": "test"}}}
-// 永久二维码
-// 1.带参数的二维码
-// {"action_name": "QR_LIMIT_SCENE", "action_info": {"scene": {"scene_id": 123}}}
-// 2.字符串形式的二维码参数
-// {"action_name": "QR_LIMIT_STR_SCENE", "action_info": {"scene": {"scene_str": "test"}}}
-
-// func QrCode(jsonString string) *Qrcode {
-// 	t, err := token.Get()
-// 	return &Qrcode{
-// 		token: t,
-// 		JsonString:jsonString,
-// 	}
-// }
-
-func (q *Qrcode)Get() (QrcResp, error) {
-	var resp QrcResp
-
-	tk, err := token.Get()
+//获取ticket
+func (q *Qrcode) Create() (*CodeInfo, error) {
+	url := oauth.Url(QRCODE_TICKET)
+	var resp CodeInfo
+	request := NewRequest().Body(q.CodeJson)
+	request.ContentType("application/json")
+	err := request.Post(url).JsonResp(&resp)
 	if err != nil {
-		return resp, err
-	} 
+		return nil, err
+	}
 
-	url := HOST + "/cgi-bin/qrcode/create?access_token=" + tk
-
-	err = NewRequest().Get(url).JsonResp(&resp)
-	if err != nil {
-		return resp , err
-	} 
-
-	return resp, nil
-} 
-
-func (q *Qrcode) DownLoad(savePath , fileName string) {
-	// resp, err := q.Get()
-	// imgUrl := HOST + "/cgi-bin/showqrcode?ticket=" + resp.Ticket 
-
+	q.Info = resp
+	return &resp, nil
 }
 
+//二维码路径
+func (q *Qrcode) Url() string {
+	q.Create()
+	v := url2.Values{}
+	v.Add("ticket", q.Info.Ticket)
+	value, err := url2.ParseQuery(v.Encode())
+	if err != nil {
+		panic(err)
+	}
 
-//转短链接
-func (q *Qrcode) Shorturl(longUrl string)(string , error){
-	tk, err := token.Get()
+	log.Printf("%#v", value)
+	return HOST + QRCODE_INFO + value["ticket"][0]
+}
+
+//保存到
+func (q *Qrcode) ToFile(p string) bool {
+	if err := NewRequest().Get(q.Url()).SaveTo("./" + p); err != nil {
+		return false
+	}
+
+	return true
+}
+
+type ShortUrlResp struct {
+	ErrCode  int    `json:"errcode"`
+	ErrMsg   string `json:"errmsg"`
+	ShortUrl string `json:"short_url"`
+}
+
+//长连接转短链接
+func ShortUrl(url string) (string, error) {
+	url1 := oauth.Url(SHORT_URL)
+	body := `{"action":"long2short", "long_url":"URL"}`
+	body = strings.Replace(body, "URL", url, -1)
+
+	var resp ShortUrlResp
+	request := NewRequest().Body(body)
+	request.ContentType("application/json")
+	err := request.Post(url1).JsonResp(&resp)
 	if err != nil {
 		return "", err
 	}
 
-	var resp QrcResp
-	url := HOST + "/cgi-bin/qrcode/create?access_token=" + tk
-	body := `{"access_token":{{.tk}}, "action":"long2short", "long_url":{{.longUrl}} }`
-
-	err = NewRequest().Body(body).Get(url).JsonResp(&resp)
-	if err != nil {
-		return  "", err
-	} 
+	if resp.ErrCode != 0 {
+		return "", errors.New(resp.ErrMsg)
+	}
 
 	return resp.ShortUrl, nil
 }
