@@ -1,6 +1,7 @@
 package wechat
 
 const HOST = "https://api.weixin.qq.com"
+const MCH_HOST = "https://api.mch.weixin.qq.com"
 
 var Wxconfig Config
 

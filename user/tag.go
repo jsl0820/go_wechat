@@ -24,11 +24,11 @@ type Tag struct {
 	Count uint
 }
 
-type TagStruct struct {
+type UserTag struct {
 }
 
 //创建标签
-func Create(tag string) bool {
+func (u *UserTag) Create(tag string) bool {
 	url := oauth.Url(USER_TAG_ADD)
 	body := strings.Replace(`{"tag":{"name":TAG}}`, "TAG", tag, -1)
 	var resp TagResp
@@ -49,7 +49,7 @@ func Create(tag string) bool {
 }
 
 //获取标签
-func Tags() (*map[string][]Tag, error) {
+func List() (*map[string][]Tag, error) {
 	url := oauth.Url(USER_TAG_ALL)
 	var resp *map[string][]Tag
 	err := NewRequest().Get(url).JsonResp(resp)
@@ -61,7 +61,7 @@ func Tags() (*map[string][]Tag, error) {
 }
 
 // 删除
-func DelTag(id string) bool {
+func Tag(id string) bool {
 	url := oauth.Url(USER_TAG_DEL)
 	body := strings.Replace(`{"tag":{"id:ID}}`, "ID", id, -1)
 
