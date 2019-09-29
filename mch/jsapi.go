@@ -6,7 +6,10 @@ import (
 	"strings"
 )
 
+const PAY_ORDER = "/pay/unifiedorder"
 const PAY_HOST = "https://api.mch.weixin.qq.com"
+
+
 
 type UnifiedResp struct {
 	ReturnCode string `xml:"return_code"`

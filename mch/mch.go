@@ -10,19 +10,30 @@ import (
 	"time"
 )
 
+
+type Param map[string]string
+
 type PayInterface interface {
 	nonce(int) string
 	sign(map[string]string) string
 	md5(string) string
 	sha1(string) string
 	stringSign(string) string
+	init()
 }
 
 const CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 type Payment struct {
-	Resp interface{}
-	Info map[string]string
+	Resp    interface{}
+	Info    map[string]string
+	Mchid   string
+	WxAppId string
+}
+
+//初始化
+func (p *Payment) init() {
+
 }
 
 //签名
@@ -48,6 +59,16 @@ func (p *Payment) md5(origin string) string {
 func (p *Payment) sha1(origin string) string {
 	r := sha1.Sum([]byte(origin))
 	return hex.EncodeToString(r[:])
+}
+
+//签名
+func (p *Payment) sign() string {
+
+}
+
+//时间戳
+func (p *Payment) timeStamp() string {
+
 }
 
 //随机字符串
