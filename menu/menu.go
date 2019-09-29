@@ -58,7 +58,6 @@ func Create(menu Item) bool {
 //删除全部菜单
 func Del() bool {
 	url := oauth.Url(MENU_DEL)
-
 	var resp MenueResp
 	err := NewRequest().Get(url).JsonResp(&resp)
 	if err != nil {
